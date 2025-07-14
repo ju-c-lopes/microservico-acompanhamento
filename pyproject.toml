@@ -1,0 +1,24 @@
+[project]
+name = "acompanhamento"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Juliano",email = "juliano.co.lopes@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi",
+    "confluent-kafka",
+    "pydantic",
+    "sqlalchemy"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "*"
+
