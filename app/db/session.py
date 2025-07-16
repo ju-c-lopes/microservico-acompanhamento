@@ -3,7 +3,9 @@ from sqlalchemy.orm import sessionmaker
 import os
 
 # TODO: Define SECRETS in Github Actions
-SQLALCHEMY_DATABASE_URL = os.environ.get("DATABASE_URL", "mysql+pymysql://usuario:senha@endpoint-do-rds:3306/nome_do_banco")
+SQLALCHEMY_DATABASE_URL = os.environ.get("DATABASE_URL", None)
+if not SQLALCHEMY_DATABASE_URL:
+    raise ValueError("DATABASE_URL environment variable is not set. Please configure it before running the application.")
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
