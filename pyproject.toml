@@ -11,7 +11,8 @@ dependencies = [
     "fastapi",
     "confluent-kafka",
     "pydantic",
-    "sqlalchemy"
+    "sqlalchemy",
+    "pymysql"
 ]
 
 
@@ -21,4 +22,5 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "*"
+alembic = "*"
 
