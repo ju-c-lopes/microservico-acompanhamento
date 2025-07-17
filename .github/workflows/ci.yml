@@ -42,7 +42,7 @@ jobs:
               run: poetry install --no-interaction --no-root
 
             - name: Install project
-              run: poetry install --no-interaction
+              run: poetry install --no-interaction --no-root
 
             - name: Run linting with ruff (if available)
               continue-on-error: true
