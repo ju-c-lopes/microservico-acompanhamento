@@ -137,7 +137,7 @@ jobs:
       uses: snok/install-poetry@v1
 
     - name: Install dependencies
-      run: poetry install --no-interaction
+      run: poetry install --no-interaction --no-root
 
     - name: Test our custom test runner
       run: |
