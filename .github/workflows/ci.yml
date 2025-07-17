@@ -111,7 +111,7 @@ jobs:
               uses: snok/install-poetry@v1
 
             - name: Install dependencies
-              run: poetry install --no-interaction
+              run: poetry install --no-interaction --no-root
 
             - name: Run safety check (if available)
               continue-on-error: true
