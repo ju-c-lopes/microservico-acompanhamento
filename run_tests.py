@@ -124,8 +124,8 @@ Examples:
                 ["python", "-m", "pytest", "--help"], capture_output=True, text=True
             )
             if "--cov" not in result.stdout:
-                raise ModuleNotFoundError
-        except (ModuleNotFoundError, FileNotFoundError):
+                raise RuntimeError("The 'pytest-cov' plugin is not installed.")
+        except (RuntimeError, FileNotFoundError):
             print(
                 "❌ The 'pytest-cov' plugin is not installed. Please install it by running:"
             )
