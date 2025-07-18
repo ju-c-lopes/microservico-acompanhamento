@@ -20,8 +20,6 @@ class ItemPedido(BaseModel):
     def validate_quantidade_positive(cls, v):
         if v <= 0:
             raise ValueError("Quantity must be positive")
-        else:
-            pass
         return v
 
 
