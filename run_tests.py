@@ -118,6 +118,13 @@ Examples:
         return 0
 
     elif command == "coverage":
+        # Check if pytest-cov is installed
+        try:
+            import pytest_cov  # noqa: F401
+        except ModuleNotFoundError:
+            print("❌ The 'pytest-cov' plugin is not installed. Please install it by running:")
+            print("   poetry add --dev pytest-cov")
+            return 1
         cmd = (
             cmd_base
             + ["tests/", "--cov=app/models", "--cov-report=html", "--cov-report=term"]
