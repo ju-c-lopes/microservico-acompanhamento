@@ -1,17 +1,23 @@
 name: Tests Badge
 
+permissions:
+  contents: write
+
 on:
   push:
-    branches: [ main, develop ]
-  pull_request:
     branches: [ main, develop ]
 
 jobs:
   test-badge:
     runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -20,8 +26,15 @@ jobs:
 
     - name: Install Poetry
       uses: snok/install-poetry@v1
+      with:
+        version: latest
+        virtualenvs-create: true
+        virtualenvs-in-project: true
 
     - name: Install dependencies
+      run: poetry install --no-interaction --no-root
+
+    - name: Install project
       run: poetry install --no-interaction --no-root
 
     - name: Run tests for badge
@@ -45,11 +58,12 @@ jobs:
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git add coverage.svg
-        git commit -m "Updated coverage badge."
+        git commit -m "🔄 Atualizado badge de coverage automaticamente"
 
     - name: Push changes
       if: steps.verify-changed-files.outputs.files_changed == 'true'
       uses: ad-m/github-push-action@master
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        branch: ${{ github.ref }}
+        branch: ${{ github.ref_name }}
+        force: false
