@@ -23,7 +23,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
-    && pip install --no-cache-dir poetry="$POETRY_VERSION" \
+    && pip install --no-cache-dir poetry=="$POETRY_VERSION" \
     && groupadd -r appuser && useradd -r -g appuser appuser
 
 # Configurar diretório de trabalho
@@ -34,7 +34,7 @@ COPY pyproject.toml poetry.lock ./
 
 # Instalar dependências Python
 RUN poetry config virtualenvs.create false \
-    && poetry install --only=main --no-interaction --no-root --no-ansi \
+    && poetry install --only=main --no-interaction --no-ansi \
     && rm -rf "$POETRY_CACHE_DIR"
 
 # Copiar código da aplicação

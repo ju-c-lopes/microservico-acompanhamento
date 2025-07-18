@@ -1,33 +1,31 @@
-[project]
+[tool.poetry]
 name = "acompanhamento"
 version = "0.1.0"
 description = "Microservice de acompanhamento de pedidos"
-authors = [
-    {name = "Juliano", email = "juliano.co.lopes@gmail.com"}
-]
+authors = ["Juliano <juliano.co.lopes@gmail.com>"]
 readme = "README.md"
-requires-python = ">=3.10"
-dependencies = [
-    "fastapi>=0.104.0",
-    "uvicorn[standard]>=0.24.0",
-    "confluent-kafka",
-    "pydantic>=2.0.0",
-    "sqlalchemy",
-    "pymysql",
-    "black",
-    "flake8",
-    "isort"
-]
+packages = [{include = "app"}]
 
-
-[build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = "^0.104.0"
+uvicorn = {extras = ["standard"], version = "^0.24.0"}
+confluent-kafka = "*"
+pydantic = "^2.0.0"
+sqlalchemy = "*"
+pymysql = "*"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "*"
-alembic = "*"
 pytest-cov = "^6.2.1"
+alembic = "*"
+black = "*"
+flake8 = "*"
+isort = "*"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
