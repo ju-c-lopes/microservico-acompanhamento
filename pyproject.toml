@@ -17,11 +17,13 @@ pymysql = "*"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "*"
-pytest-cov = "^6.2.1"
+pytest-cov = "*"
 alembic = "*"
 black = "*"
 flake8 = "*"
 isort = "*"
+ruff = "*"
+mypy = "*"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
