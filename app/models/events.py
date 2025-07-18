@@ -37,8 +37,6 @@ class EventoPedido(BaseModel):
     def validate_itens_not_empty(cls, v):
         if not v or len(v) == 0:
             raise ValueError("Order must have at least one item")
-        else:
-            pass
         return v
 
 
