@@ -1,0 +1,189 @@
+name: Main Branch Protection
+
+on:
+    pull_request:
+        branches: [main]
+        types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+    required-checks:
+        runs-on: ubuntu-latest
+        if: github.event.pull_request.draft == false
+
+        steps:
+            - name: Checkout PR code
+              uses: actions/checkout@v4
+              with:
+                  # Checkout the PR branch, not the target branch
+                  ref: ${{ github.event.pull_request.head.sha }}
+
+            - name: Set up Python
+              uses: actions/setup-python@v4
+              with:
+                  python-version: "3.12"
+
+            - name: Install Poetry
+              uses: snok/install-poetry@v1
+              with:
+                  version: latest
+                  virtualenvs-create: true
+                  virtualenvs-in-project: true
+
+            - name: Install dependencies
+              run: poetry install --no-interaction --no-root
+
+            - name: 🧪 Run Unit Tests (Required)
+              run: |
+                  echo "🧪 Running unit tests - REQUIRED for main branch"
+                  poetry run python -m pytest tests/unit/ -v --tb=short
+                  echo "✅ Unit tests passed"
+
+            - name: 🔗 Run Integration Tests (Required)
+              run: |
+                  echo "🔗 Running integration tests - REQUIRED for main branch"  
+                  poetry run python -m pytest tests/integration/ -v --tb=short
+                  echo "✅ Integration tests passed"
+
+            - name: 🚀 Run Performance Tests (Required)
+              run: |
+                  echo "🚀 Running performance tests - REQUIRED for main branch"
+                  poetry run python -m pytest tests/performance/ -v --tb=short -m performance
+                  echo "✅ Performance tests passed"
+
+            - name: 🌐 Run E2E Tests (Required)
+              run: |
+                  echo "🌐 Running E2E tests - REQUIRED for main branch"
+                  poetry run python -m pytest tests/e2e/ -v --tb=short
+                  echo "✅ E2E tests passed"
+
+            - name: 📊 Coverage Check (Required)
+              run: |
+                  echo "📊 Running coverage check - REQUIRED minimum 90%"
+                  poetry run python -m pytest tests/ --cov=app/models --cov-report=term --cov-fail-under=90
+                  echo "✅ Coverage requirement met"
+
+            - name: 🛡️ Business Rules Validation (Required)
+              run: |
+                  echo "🛡️ Validating business rules - REQUIRED for main branch"
+                  poetry run python -c "
+                  from app.models.acompanhamento import ItemPedido, EventoPedido
+                  from pydantic import ValidationError
+                  import sys
+
+                  print('Testing business rule validations...')
+
+                  # Test 1: Valid items should work
+                  try:
+                      item = ItemPedido(id_produto=1, quantidade=1)
+                      print('✅ Valid ItemPedido created')
+                  except Exception as e:
+                      print(f'❌ Failed to create valid ItemPedido: {e}')
+                      sys.exit(1)
+                      
+                  # Test 2: Zero values should be rejected
+                  try:
+                      ItemPedido(id_produto=0, quantidade=1)
+                      print('❌ Zero id_produto should have been rejected')
+                      sys.exit(1)
+                  except ValidationError:
+                      print('✅ Zero id_produto correctly rejected')
+                      
+                  try:
+                      ItemPedido(id_produto=1, quantidade=0)
+                      print('❌ Zero quantidade should have been rejected') 
+                      sys.exit(1)
+                  except ValidationError:
+                      print('✅ Zero quantidade correctly rejected')
+                      
+                  # Test 3: Empty items list should be rejected
+                  from datetime import datetime
+                  try:
+                      EventoPedido(
+                          id_pedido=1,
+                          cpf_cliente='123.456.789-00',
+                          itens=[],
+                          total_pedido=0.0,
+                          status='criado',
+                          criado_em=datetime.now()
+                      )
+                      print('❌ Empty items list should have been rejected')
+                      sys.exit(1)
+                  except ValidationError:
+                      print('✅ Empty items list correctly rejected')
+                      
+                  print('✅ All business rule validations passed')
+                  "
+
+            - name: 🎯 Main Branch Protection Summary
+              run: |
+                  echo "## 🎯 Main Branch Protection Summary" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "**All required checks have passed for main branch merge:**" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "- ✅ **Unit Tests**: All model and schema tests passed" >> $GITHUB_STEP_SUMMARY
+                  echo "- ✅ **Integration Tests**: Component interaction tests passed" >> $GITHUB_STEP_SUMMARY  
+                  echo "- ✅ **Performance Tests**: Performance benchmarks passed" >> $GITHUB_STEP_SUMMARY
+                  echo "- ✅ **E2E Tests**: End-to-end workflow tests passed" >> $GITHUB_STEP_SUMMARY
+                  echo "- ✅ **Coverage**: Minimum 90% coverage maintained" >> $GITHUB_STEP_SUMMARY
+                  echo "- ✅ **Business Rules**: All validation rules enforced" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "🚀 **This PR is ready to be merged to main branch!**" >> $GITHUB_STEP_SUMMARY
+
+    code-quality:
+        runs-on: ubuntu-latest
+        if: github.event.pull_request.draft == false
+
+        steps:
+            - name: Checkout PR code
+              uses: actions/checkout@v4
+              with:
+                  ref: ${{ github.event.pull_request.head.sha }}
+
+            - name: Set up Python
+              uses: actions/setup-python@v4
+              with:
+                  python-version: "3.12"
+
+            - name: Install Poetry
+              uses: snok/install-poetry@v1
+
+            - name: Install dependencies
+              run: poetry install --no-interaction --no-root
+
+            - name: 📝 Code Quality Checks (Advisory)
+              continue-on-error: true
+              run: |
+                  echo "📝 Running code quality checks (advisory, won't block PR)"
+
+                  # Check if tools are available and run them
+                  if poetry show black &> /dev/null; then
+                    echo "Running black format check..."
+                    poetry run black --check . || echo "⚠️ Code formatting issues found (run 'black .' to fix)"
+                  fi
+
+                  if poetry show ruff &> /dev/null; then
+                    echo "Running ruff linting..."
+                    poetry run ruff check . || echo "⚠️ Linting issues found"
+                  fi
+
+                  if poetry show mypy &> /dev/null; then
+                    echo "Running mypy type checking..."
+                    poetry run mypy app/ || echo "⚠️ Type checking issues found"
+                  fi
+
+                  echo "✅ Code quality checks completed (advisory only)"
+
+    security-check:
+        runs-on: ubuntu-latest
+        if: github.event.pull_request.draft == false
+
+        steps:
+            - name: Checkout PR code
+              uses: actions/checkout@v4
+
+            - name: 🔒 Security Scan (Advisory)
+              continue-on-error: true
+              run: |
+                  echo "🔒 Running security checks (advisory, won't block PR)"
+                  echo "⚠️ Security tools not configured yet - this is for future enhancement"
+                  echo "✅ Security check placeholder completed"

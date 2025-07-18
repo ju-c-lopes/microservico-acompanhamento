@@ -1,0 +1,85 @@
+name: Pull Request Check
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  validate-pr:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout PR code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.12"
+
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+
+    - name: Install dependencies
+      run: poetry install --no-interaction --no-root
+
+    - name: Run quick validation tests
+      run: |
+        echo "🧪 Running quick validation tests for PR..."
+        
+        # Run unit tests (fastest)
+        echo "Running unit tests..."
+        poetry run python -m pytest tests/unit/ -v --tb=short
+        
+        # Run integration tests
+        echo "Running integration tests..."
+        poetry run python -m pytest tests/integration/ -v --tb=short
+        
+        # Check if models can be imported
+        echo "Testing model imports..."
+        poetry run python -c "
+        from app.models.acompanhamento import ItemPedido, EventoPedido, EventoPagamento, Acompanhamento
+        from app.models.events import ItemPedido as EventsItemPedido, EventoPedido as EventsEventoPedido
+        print('✅ All models imported successfully')
+        "
+        
+        # Test business rule validations
+        echo "Testing business rule validations..."
+        poetry run python -c "
+        from app.models.acompanhamento import ItemPedido
+        from pydantic import ValidationError
+        
+        # Test valid item
+        item = ItemPedido(id_produto=1, quantidade=1)
+        print('✅ Valid item created')
+        
+        # Test invalid items
+        try:
+            ItemPedido(id_produto=0, quantidade=1)
+            raise Exception('Should have failed')
+        except ValidationError:
+            print('✅ Zero id_produto correctly rejected')
+            
+        try:
+            ItemPedido(id_produto=1, quantidade=0)
+            raise Exception('Should have failed')
+        except ValidationError:
+            print('✅ Zero quantidade correctly rejected')
+            
+        print('✅ All business rule validations working')
+        "
+
+    - name: Generate coverage report for PR
+      run: |
+        poetry run python -m pytest tests/ --cov=app/models --cov-report=term --cov-report=html
+        echo "📊 Coverage report generated"
+
+    - name: PR Summary
+      run: |
+        echo "## 🎯 PR Validation Summary" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Unit tests passed" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Integration tests passed" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Model imports working" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Business rule validations working" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Coverage report generated" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "🚀 **PR is ready for review!**" >> $GITHUB_STEP_SUMMARY
