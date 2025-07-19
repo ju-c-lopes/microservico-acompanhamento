@@ -200,10 +200,7 @@ class TestAcompanhamentoRepositoryReadOperations:
         repository = AcompanhamentoRepository(mock_session)
 
         # Simula lista de resultados - usar Mock simples para .all()
-        mock_scalars = AsyncMock()
-        mock_scalars.all = lambda: [
-            sample_acompanhamento
-        ]  # função simples não coroutine
+        mock_scalars = self._mock_scalars_with_all([sample_acompanhamento])
 
         mock_result = AsyncMock()
         mock_result.scalars = lambda: mock_scalars  # função simples não coroutine
