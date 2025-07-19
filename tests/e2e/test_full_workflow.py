@@ -1,7 +1,8 @@
 from datetime import datetime
 
 from app.domain.order_state import StatusPagamento, StatusPedido
-from app.models.acompanhamento import (Acompanhamento, EventoPagamento, EventoPedido, ItemPedido)
+from app.models.acompanhamento import (Acompanhamento, EventoPagamento,
+                                       EventoPedido, ItemPedido)
 from app.models.events import EventoAcompanhamento
 
 
