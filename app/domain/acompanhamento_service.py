@@ -1,13 +1,10 @@
 from datetime import datetime
 from typing import List, Optional
 
-from app.domain.order_state import (
-    OrderStateManager,
-    StatusPagamento,
-    StatusPedido,
-    get_estimated_time_minutes,
-)
-from app.models.acompanhamento import Acompanhamento, EventoPagamento, EventoPedido
+from app.domain.order_state import (OrderStateManager, StatusPagamento,
+                                    StatusPedido, get_estimated_time_minutes)
+from app.models.acompanhamento import (Acompanhamento, EventoPagamento,
+                                       EventoPedido)
 
 
 class AcompanhamentoService:

@@ -2,8 +2,8 @@ from datetime import datetime
 
 import pytest
 
-from app.models.acompanhamento import (Acompanhamento, EventoPagamento,
-                                       EventoPedido, ItemPedido)
+from app.domain.order_state import StatusPagamento, StatusPedido
+from app.models.acompanhamento import (Acompanhamento, EventoPagamento, EventoPedido, ItemPedido)
 from app.models.events import EventoAcompanhamento
 
 
@@ -42,8 +42,8 @@ class TestModelConsistency:
         acompanhamento = Acompanhamento(
             id_pedido=evento_pedido.id_pedido,
             cpf_cliente=evento_pedido.cpf_cliente,
-            status="preparando",  # Status evolved from "criado"
-            status_pagamento="pago",
+            status=StatusPedido.EM_PREPARACAO,  # Status evolved from "criado"
+            status_pagamento=StatusPagamento.PAGO,
             itens=evento_pedido.itens,
             tempo_estimado=evento_pedido.tempo_estimado,
             atualizado_em=sample_datetime,
@@ -61,14 +61,17 @@ class TestModelConsistency:
         """Test consistency between EventoPagamento and Acompanhamento"""
         # Create EventoPagamento
         evento_pagamento = EventoPagamento(
-            id_pagamento=999, id_pedido=12345, status="pago", criado_em=sample_datetime
+            id_pagamento=999,
+            id_pedido=12345,
+            status=StatusPagamento.PAGO,
+            criado_em=sample_datetime,
         )
 
         # Create corresponding Acompanhamento
         acompanhamento = Acompanhamento(
             id_pedido=evento_pagamento.id_pedido,
             cpf_cliente="123.456.789-00",
-            status="preparando",
+            status=StatusPedido.EM_PREPARACAO,
             status_pagamento=evento_pagamento.status,
             itens=sample_itens,
             tempo_estimado="25 min",
@@ -96,7 +99,7 @@ class TestModelConsistency:
         evento_pagamento = EventoPagamento(
             id_pagamento=999,
             id_pedido=evento_pedido.id_pedido,
-            status="pago",
+            status=StatusPagamento.PAGO,
             criado_em=sample_datetime,
         )
 
@@ -104,7 +107,7 @@ class TestModelConsistency:
         acompanhamento = Acompanhamento(
             id_pedido=evento_pedido.id_pedido,
             cpf_cliente=evento_pedido.cpf_cliente,
-            status="preparando",
+            status=StatusPedido.EM_PREPARACAO,
             status_pagamento=evento_pagamento.status,
             itens=evento_pedido.itens,
             tempo_estimado="25 min",  # Updated time
@@ -114,24 +117,24 @@ class TestModelConsistency:
         # Verify the complete flow
         assert acompanhamento.id_pedido == evento_pedido.id_pedido
         assert acompanhamento.status_pagamento == evento_pagamento.status
-        assert acompanhamento.status == "preparando"  # Status evolved
+        assert acompanhamento.status == StatusPedido.EM_PREPARACAO  # Status evolved
 
     def test_business_rule_violations(self, sample_datetime, sample_itens):
         """Test business rule violations across models"""
-        # Business rule: Can't have "entregue" status with "pendente" payment
+        # Business rule: Can't have "finalizado" status with "pendente" payment
         acompanhamento = Acompanhamento(
             id_pedido=12345,
             cpf_cliente="123.456.789-00",
-            status="entregue",
-            status_pagamento="pendente",  # This violates business logic
+            status=StatusPedido.FINALIZADO,
+            status_pagamento=StatusPagamento.PENDENTE,  # This violates business logic
             itens=sample_itens,
             tempo_estimado="0 min",
             atualizado_em=sample_datetime,
         )
 
         # This should be caught by business logic (not by Pydantic validation)
-        assert acompanhamento.status == "entregue"
-        assert acompanhamento.status_pagamento == "pendente"
+        assert acompanhamento.status == StatusPedido.FINALIZADO
+        assert acompanhamento.status_pagamento == StatusPagamento.PENDENTE
         # In real application, this would be validated by business logic layer
 
 
@@ -155,25 +158,28 @@ class TestEventFlow:
         )
 
         # Step 2: Payment processed
-        evento_pagamento = EventoPagamento(
-            id_pagamento=999, id_pedido=12345, status="pago", criado_em=timestamp
+        EventoPagamento(
+            id_pagamento=999,
+            id_pedido=12345,
+            status=StatusPagamento.PAGO,
+            criado_em=timestamp,
         )
 
         # Step 3: Order status updates
-        status_updates = ["preparando", "pronto", "entregue"]
+        status_updates = ["em_preparacao", "pronto", "finalizado"]
 
         for status in status_updates:
             evento_acompanhamento = EventoAcompanhamento(
                 id_pedido=12345,
                 status=status,
                 status_pagamento="pago",
-                tempo_estimado="15 min" if status != "entregue" else None,
+                tempo_estimado="15 min" if status != "finalizado" else None,
                 atualizado_em=timestamp,
             )
 
             # Verify each status update
             assert evento_acompanhamento.id_pedido == evento_pedido.id_pedido
-            assert evento_acompanhamento.status_pagamento == evento_pagamento.status
+            assert evento_acompanhamento.status_pagamento == "pago"
             assert evento_acompanhamento.status == status
 
     def test_order_with_multiple_items(self):

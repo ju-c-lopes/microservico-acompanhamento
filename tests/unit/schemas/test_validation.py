@@ -3,6 +3,7 @@ from datetime import datetime
 import pytest
 from pydantic import ValidationError
 
+from app.domain.order_state import StatusPagamento, StatusPedido
 from app.models.acompanhamento import (Acompanhamento, EventoPagamento,
                                        EventoPedido, ItemPedido)
 
@@ -46,8 +47,8 @@ class TestSchemaValidation:
             acompanhamento = Acompanhamento(
                 id_pedido=1,
                 cpf_cliente=cpf,
-                status="preparando",
-                status_pagamento="pago",
+                status=StatusPedido.EM_PREPARACAO,
+                status_pagamento=StatusPagamento.PAGO,
                 itens=sample_itens,
                 tempo_estimado="20 min",
                 atualizado_em=datetime.now(),
@@ -58,15 +59,20 @@ class TestSchemaValidation:
         """Test status field validation"""
         sample_itens = [ItemPedido(id_produto=1, quantidade=1)]
 
-        # Test valid statuses
-        valid_statuses = ["aguardando_pagamento", "preparando", "pronto", "entregue"]
+        # Test valid statuses using the enum values
+        valid_statuses = [
+            StatusPedido.RECEBIDO,
+            StatusPedido.EM_PREPARACAO,
+            StatusPedido.PRONTO,
+            StatusPedido.FINALIZADO,
+        ]
 
         for status in valid_statuses:
             acompanhamento = Acompanhamento(
                 id_pedido=1,
                 cpf_cliente="123.456.789-00",
                 status=status,
-                status_pagamento="pago",
+                status_pagamento=StatusPagamento.PAGO,
                 itens=sample_itens,
                 tempo_estimado="20 min",
                 atualizado_em=datetime.now(),
@@ -77,14 +83,18 @@ class TestSchemaValidation:
         """Test payment status validation"""
         sample_itens = [ItemPedido(id_produto=1, quantidade=1)]
 
-        # Test valid payment statuses
-        valid_payment_statuses = ["pago", "pendente", "falhou"]
+        # Test valid payment statuses using the enum values
+        valid_payment_statuses = [
+            StatusPagamento.PAGO,
+            StatusPagamento.PENDENTE,
+            StatusPagamento.FALHOU,
+        ]
 
         for status_pagamento in valid_payment_statuses:
             acompanhamento = Acompanhamento(
                 id_pedido=1,
                 cpf_cliente="123.456.789-00",
-                status="preparando",
+                status=StatusPedido.EM_PREPARACAO,
                 status_pagamento=status_pagamento,
                 itens=sample_itens,
                 tempo_estimado="20 min",
@@ -102,8 +112,8 @@ class TestSchemaValidation:
         acompanhamento = Acompanhamento(
             id_pedido=1,
             cpf_cliente="123.456.789-00",
-            status="preparando",
-            status_pagamento="pago",
+            status=StatusPedido.EM_PREPARACAO,
+            status_pagamento=StatusPagamento.PAGO,
             itens=sample_itens,
             tempo_estimado="20 min",
             atualizado_em=valid_datetime,
@@ -119,7 +129,7 @@ class TestSchemaValidation:
                 itens=[],  # Empty list should not be allowed
                 total_pedido=0.0,
                 tempo_estimado="0 min",
-                status="criado",
+                status="recebido",  # Using string for now since EventoPedido still uses str
                 criado_em=datetime.now(),
             )
 
@@ -132,7 +142,7 @@ class TestSchemaValidation:
             evento = EventoPagamento(
                 id_pagamento=id_value,
                 id_pedido=id_value,
-                status="pago",
+                status=StatusPagamento.PAGO,
                 criado_em=datetime.now(),
             )
             assert evento.id_pagamento == id_value
@@ -149,8 +159,8 @@ class TestSchemaValidation:
             acompanhamento = Acompanhamento(
                 id_pedido=1,
                 cpf_cliente="123.456.789-00",
-                status="preparando",
-                status_pagamento="pago",
+                status=StatusPedido.EM_PREPARACAO,
+                status_pagamento=StatusPagamento.PAGO,
                 itens=sample_itens,
                 tempo_estimado=tempo,
                 atualizado_em=datetime.now(),

@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 import pytest
 from pydantic import ValidationError
 
+from app.domain.order_state import StatusPagamento, StatusPedido
 from app.models.acompanhamento import (Acompanhamento, EventoPagamento,
                                        EventoPedido, ItemPedido)
 from app.models.events import EventoAcompanhamento
@@ -84,7 +85,7 @@ class TestEventoPedido:
             itens=sample_itens,
             total_pedido=59.90,
             tempo_estimado="30 min",
-            status="criado",
+            status=StatusPedido.RECEBIDO,
             criado_em=sample_datetime,
         )
         assert evento.id_pedido == 12345
@@ -92,7 +93,7 @@ class TestEventoPedido:
         assert len(evento.itens) == 2
         assert evento.total_pedido == 59.90
         assert evento.tempo_estimado == "30 min"
-        assert evento.status == "criado"
+        assert evento.status == StatusPedido.RECEBIDO
         assert evento.criado_em == sample_datetime
 
     def test_evento_pedido_optional_tempo_estimado(self, sample_datetime, sample_itens):
@@ -103,7 +104,7 @@ class TestEventoPedido:
             itens=sample_itens,
             total_pedido=59.90,
             tempo_estimado=None,
-            status="criado",
+            status=StatusPedido.RECEBIDO,
             criado_em=sample_datetime,
         )
         assert evento.tempo_estimado is None
@@ -117,7 +118,7 @@ class TestEventoPedido:
                 itens=[],  # Empty items list should not be allowed
                 total_pedido=0.0,
                 tempo_estimado=None,
-                status="criado",
+                status=StatusPedido.RECEBIDO,
                 criado_em=sample_datetime,
             )
 
@@ -130,7 +131,7 @@ class TestEventoPedido:
                 itens=sample_itens,
                 total_pedido="invalid",
                 tempo_estimado="30 min",
-                status="criado",
+                status=StatusPedido.RECEBIDO,
                 criado_em=sample_datetime,
             )
 
@@ -158,7 +159,7 @@ class TestEventoPedido:
             itens=sample_itens,
             total_pedido=59.90,
             tempo_estimado="30 min",
-            status="criado",
+            status=StatusPedido.RECEBIDO,
             criado_em=sample_datetime,
         )
 
@@ -168,7 +169,7 @@ class TestEventoPedido:
         assert len(serialized["itens"]) == 2
         assert serialized["total_pedido"] == 59.90
         assert serialized["tempo_estimado"] == "30 min"
-        assert serialized["status"] == "criado"
+        assert serialized["status"] == "Recebido"
         assert serialized["criado_em"] == sample_datetime
 
 
@@ -183,7 +184,10 @@ class TestEventoPagamento:
     def test_create_valid_evento_pagamento(self, sample_datetime):
         """Test creating a valid EventoPagamento"""
         evento = EventoPagamento(
-            id_pagamento=999, id_pedido=12345, status="pago", criado_em=sample_datetime
+            id_pagamento=999,
+            id_pedido=12345,
+            status=StatusPagamento.PAGO,
+            criado_em=sample_datetime,
         )
         assert evento.id_pagamento == 999
         assert evento.id_pedido == 12345
@@ -206,12 +210,17 @@ class TestEventoPagamento:
     def test_evento_pagamento_missing_fields(self, sample_datetime):
         """Test EventoPagamento with missing required fields"""
         with pytest.raises(ValidationError):
-            EventoPagamento(id_pedido=12345, status="pago", criado_em=sample_datetime)
+            EventoPagamento(
+                id_pedido=12345, status=StatusPagamento.PAGO, criado_em=sample_datetime
+            )
 
     def test_evento_pagamento_serialization(self, sample_datetime):
         """Test EventoPagamento serialization"""
         evento = EventoPagamento(
-            id_pagamento=999, id_pedido=12345, status="pago", criado_em=sample_datetime
+            id_pagamento=999,
+            id_pedido=12345,
+            status=StatusPagamento.PAGO,
+            criado_em=sample_datetime,
         )
 
         serialized = evento.model_dump()
@@ -245,15 +254,15 @@ class TestAcompanhamento:
         acompanhamento = Acompanhamento(
             id_pedido=12345,
             cpf_cliente="123.456.789-00",
-            status="preparando",
-            status_pagamento="pago",
+            status=StatusPedido.EM_PREPARACAO,
+            status_pagamento=StatusPagamento.PAGO,
             itens=sample_itens,
             tempo_estimado="25 min",
             atualizado_em=sample_datetime,
         )
         assert acompanhamento.id_pedido == 12345
         assert acompanhamento.cpf_cliente == "123.456.789-00"
-        assert acompanhamento.status == "preparando"
+        assert acompanhamento.status == StatusPedido.EM_PREPARACAO
         assert acompanhamento.status_pagamento == "pago"
         assert len(acompanhamento.itens) == 2
         assert acompanhamento.tempo_estimado == "25 min"
@@ -266,8 +275,8 @@ class TestAcompanhamento:
         acompanhamento = Acompanhamento(
             id_pedido=12345,
             cpf_cliente="123.456.789-00",
-            status="preparando",
-            status_pagamento="pago",
+            status=StatusPedido.EM_PREPARACAO,
+            status_pagamento=StatusPagamento.PAGO,
             itens=sample_itens,
             tempo_estimado=None,
             atualizado_em=sample_datetime,
@@ -277,10 +286,10 @@ class TestAcompanhamento:
     def test_acompanhamento_status_combinations(self, sample_datetime, sample_itens):
         """Test Acompanhamento with different status combinations"""
         status_combinations = [
-            ("aguardando_pagamento", "pendente"),
-            ("preparando", "pago"),
-            ("pronto", "pago"),
-            ("entregue", "pago"),
+            (StatusPedido.RECEBIDO, StatusPagamento.PENDENTE),
+            (StatusPedido.EM_PREPARACAO, StatusPagamento.PAGO),
+            (StatusPedido.PRONTO, StatusPagamento.PAGO),
+            (StatusPedido.FINALIZADO, StatusPagamento.PAGO),
         ]
 
         for status, status_pagamento in status_combinations:
@@ -301,8 +310,8 @@ class TestAcompanhamento:
         acompanhamento = Acompanhamento(
             id_pedido=12345,
             cpf_cliente="123.456.789-00",
-            status="preparando",
-            status_pagamento="pago",
+            status=StatusPedido.EM_PREPARACAO,
+            status_pagamento=StatusPagamento.PAGO,
             itens=sample_itens,
             tempo_estimado="25 min",
             atualizado_em=sample_datetime,
@@ -311,7 +320,7 @@ class TestAcompanhamento:
         serialized = acompanhamento.model_dump()
         assert serialized["id_pedido"] == 12345
         assert serialized["cpf_cliente"] == "123.456.789-00"
-        assert serialized["status"] == "preparando"
+        assert serialized["status"] == StatusPedido.EM_PREPARACAO
         assert serialized["status_pagamento"] == "pago"
         assert len(serialized["itens"]) == 2
         assert serialized["tempo_estimado"] == "25 min"
@@ -330,13 +339,13 @@ class TestEventoAcompanhamento:
         """Test creating a valid EventoAcompanhamento"""
         evento = EventoAcompanhamento(
             id_pedido=12345,
-            status="preparando",
-            status_pagamento="pago",
+            status=StatusPedido.EM_PREPARACAO,
+            status_pagamento=StatusPagamento.PAGO,
             tempo_estimado="20 min",
             atualizado_em=sample_datetime,
         )
         assert evento.id_pedido == 12345
-        assert evento.status == "preparando"
+        assert evento.status == StatusPedido.EM_PREPARACAO
         assert evento.status_pagamento == "pago"
         assert evento.tempo_estimado == "20 min"
         assert evento.atualizado_em == sample_datetime
@@ -345,8 +354,8 @@ class TestEventoAcompanhamento:
         """Test EventoAcompanhamento with optional tempo_estimado as None"""
         evento = EventoAcompanhamento(
             id_pedido=12345,
-            status="preparando",
-            status_pagamento="pago",
+            status=StatusPedido.EM_PREPARACAO,
+            status_pagamento=StatusPagamento.PAGO,
             tempo_estimado=None,
             atualizado_em=sample_datetime,
         )
@@ -360,7 +369,7 @@ class TestEventoAcompanhamento:
             evento = EventoAcompanhamento(
                 id_pedido=12345,
                 status=status,
-                status_pagamento="pago",
+                status_pagamento=StatusPagamento.PAGO,
                 tempo_estimado="20 min",
                 atualizado_em=sample_datetime,
             )
@@ -370,8 +379,8 @@ class TestEventoAcompanhamento:
         """Test EventoAcompanhamento serialization"""
         evento = EventoAcompanhamento(
             id_pedido=12345,
-            status="preparando",
-            status_pagamento="pago",
+            status=StatusPedido.EM_PREPARACAO,
+            status_pagamento=StatusPagamento.PAGO,
             tempo_estimado="20 min",
             atualizado_em=sample_datetime,
         )
@@ -379,7 +388,7 @@ class TestEventoAcompanhamento:
         serialized = evento.model_dump()
         expected = {
             "id_pedido": 12345,
-            "status": "preparando",
+            "status": "Em preparação",
             "status_pagamento": "pago",
             "tempo_estimado": "20 min",
             "atualizado_em": sample_datetime,
@@ -399,7 +408,10 @@ class TestModelIntegration:
 
         # Test with different datetime values
         evento = EventoPagamento(
-            id_pagamento=1, id_pedido=1, status="pago", criado_em=future_date
+            id_pagamento=1,
+            id_pedido=1,
+            status=StatusPagamento.PAGO,
+            criado_em=future_date,
         )
         assert evento.criado_em == future_date
 
@@ -416,8 +428,8 @@ class TestModelIntegration:
             acompanhamento = Acompanhamento(
                 id_pedido=1,
                 cpf_cliente=cpf,
-                status="preparando",
-                status_pagamento="pago",
+                status=StatusPedido.EM_PREPARACAO,
+                status_pagamento=StatusPagamento.PAGO,
                 itens=sample_itens,
                 tempo_estimado="20 min",
                 atualizado_em=datetime.now(),
@@ -434,15 +446,16 @@ class TestModelIntegration:
         acompanhamento = Acompanhamento(
             id_pedido=1,
             cpf_cliente="123.456.789-00",
-            status="preparando 🍕",
-            status_pagamento="pago ✓",
+            status=StatusPedido.EM_PREPARACAO,  # Using valid enum
+            status_pagamento=StatusPagamento.PAGO,  # Using valid enum
             itens=[ItemPedido(id_produto=1, quantidade=1)],
-            tempo_estimado="20 min ⏰",
+            tempo_estimado="20 min ⏰",  # Unicode allowed in tempo_estimado
             atualizado_em=datetime.now(),
         )
-        assert "🍕" in acompanhamento.status
-        assert "✓" in acompanhamento.status_pagamento
-        assert "⏰" in acompanhamento.tempo_estimado
+        # Test that enums work correctly
+        assert acompanhamento.status == StatusPedido.EM_PREPARACAO
+        assert acompanhamento.status_pagamento == StatusPagamento.PAGO
+        assert acompanhamento.tempo_estimado and "⏰" in acompanhamento.tempo_estimado
 
     def test_model_equality(self):
         """Test model equality comparison"""

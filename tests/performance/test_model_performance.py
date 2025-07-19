@@ -3,8 +3,8 @@ from datetime import datetime
 
 import pytest
 
-from app.models.acompanhamento import (Acompanhamento, EventoPagamento,
-                                       EventoPedido, ItemPedido)
+from app.domain.order_state import StatusPagamento, StatusPedido
+from app.models.acompanhamento import (Acompanhamento, EventoPedido, ItemPedido)
 
 
 class TestModelPerformance:
@@ -51,8 +51,8 @@ class TestModelPerformance:
             Acompanhamento(
                 id_pedido=i,
                 cpf_cliente=f"123.456.789-{i:02d}",
-                status="preparando",
-                status_pagamento="pago",
+                status=StatusPedido.EM_PREPARACAO,
+                status_pagamento=StatusPagamento.PAGO,
                 itens=itens,
                 tempo_estimado="20 min",
                 atualizado_em=datetime.now(),
