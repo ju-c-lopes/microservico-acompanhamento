@@ -19,9 +19,7 @@ import pytest
 from app.db.base import Acompanhamento as AcompanhamentoModel
 from app.domain.order_state import StatusPedido
 from app.repository.acompanhamento_repository import (
-    AcompanhamentoRepository,
-    AcompanhamentoRepositoryInterface,
-)
+    AcompanhamentoRepository, AcompanhamentoRepositoryInterface)
 
 
 class TestAcompanhamentoRepositoryInterface:
