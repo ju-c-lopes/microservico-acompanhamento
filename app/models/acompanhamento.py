@@ -3,6 +3,8 @@ from typing import List, Optional
 
 from pydantic import BaseModel, field_validator
 
+from app.domain.order_state import StatusPagamento, StatusPedido
+
 
 class ItemPedido(BaseModel):
     id_produto: int
@@ -28,8 +30,8 @@ class EventoPedido(BaseModel):
     cpf_cliente: str
     itens: List[ItemPedido]
     total_pedido: float
-    tempo_estimado: Optional[str]
-    status: str  # Ex: "criado", "preparando", "pronto", "entregue"
+    tempo_estimado: Optional[str] = None
+    status: str  # Ex: "criado", "preparando", "pronto", "entregue" - Status do microserviço de pedidos
     criado_em: datetime
 
     @field_validator("itens")
@@ -43,16 +45,17 @@ class EventoPedido(BaseModel):
 class EventoPagamento(BaseModel):
     id_pagamento: int
     id_pedido: int
-    status: str  # Ex: "pago", "pendente", "falhou"
+    status: StatusPagamento  # Usando enum para validação automática
     criado_em: datetime
 
 
 class Acompanhamento(BaseModel):
     id_pedido: int
     cpf_cliente: str
-    status: str  # Ex: "aguardando_pagamento", "preparando", "pronto", "entregue"
-    status_pagamento: str  # Ex: "pago", "pendente"
+    status: StatusPedido  # Usando enum para validação automática
+    status_pagamento: StatusPagamento  # Usando enum para validação automática
     itens: List[ItemPedido]
+    valor_pago: Optional[float] = None  # Valor efetivamente pago
     tempo_estimado: Optional[str]
     atualizado_em: datetime
 

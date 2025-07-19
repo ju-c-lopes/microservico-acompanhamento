@@ -4,8 +4,7 @@ from datetime import datetime
 import pytest
 from pydantic import ValidationError
 
-from app.models.acompanhamento import (Acompanhamento, EventoPagamento,
-                                       EventoPedido, ItemPedido)
+from app.models.acompanhamento import (Acompanhamento, EventoPagamento, EventoPedido, ItemPedido)
 
 
 class TestModelValidation:
@@ -170,8 +169,8 @@ class TestModelSerialization:
         """Test model fields information"""
         # Test ItemPedido fields
         item_fields = ItemPedido.model_fields
-        assert "id_produto" in item_fields
-        assert "quantidade" in item_fields
+        assert "id_produto" in item_fields.keys()
+        assert "quantidade" in item_fields.keys()
 
         # Test EventoPedido fields
         evento_fields = EventoPedido.model_fields
