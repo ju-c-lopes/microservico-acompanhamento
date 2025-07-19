@@ -44,6 +44,7 @@ Available commands:
   ci              - Run tests suitable for CI (all except performance)
   coverage        - Run all tests with coverage report
   repository      - Run repository tests only
+  service         - Run service layer tests only
   
   # Specific model tests:
   item            - Run ItemPedido tests
@@ -88,6 +89,10 @@ Examples:
     elif command == "repository":
         cmd = cmd_base + ["tests/unit/repository/"] + common_opts
         return run_command(cmd, "Running repository tests")
+
+    elif command == "service":
+        cmd = cmd_base + ["tests/unit/service/"] + common_opts
+        return run_command(cmd, "Running service layer tests")
 
     elif command == "models":
         unit_result = run_command(
