@@ -4,6 +4,7 @@ from datetime import datetime
 import pytest
 from pydantic import ValidationError
 
+from app.domain.order_state import StatusPagamento, StatusPedido
 from app.models.acompanhamento import (Acompanhamento, EventoPagamento,
                                        EventoPedido, ItemPedido)
 
@@ -39,7 +40,7 @@ class TestModelValidation:
             itens=sample_itens,
             total_pedido=123.456789,
             tempo_estimado="30 min",
-            status="criado",
+            status=StatusPedido.RECEBIDO,
             criado_em=datetime.now(),
         )
         assert evento.total_pedido == 123.456789
@@ -49,25 +50,24 @@ class TestModelValidation:
         assert evento.total_pedido == 0.0
 
     def test_status_field_empty_string(self):
-        """Test models with empty string status"""
-        # Test EventoPagamento with empty status
-        evento_pagamento = EventoPagamento(
-            id_pagamento=1, id_pedido=1, status="", criado_em=datetime.now()
-        )
-        assert evento_pagamento.status == ""
+        """Test models reject empty string status (now using enums)"""
+        # Test EventoPagamento rejects empty status
+        with pytest.raises(ValidationError):
+            EventoPagamento(
+                id_pagamento=1, id_pedido=1, status="", criado_em=datetime.now()
+            )
 
-        # Test Acompanhamento with empty status
-        acompanhamento = Acompanhamento(
-            id_pedido=1,
-            cpf_cliente="123.456.789-00",
-            status="",
-            status_pagamento="",
-            itens=[ItemPedido(id_produto=1, quantidade=1)],
-            tempo_estimado="20 min",
-            atualizado_em=datetime.now(),
-        )
-        assert acompanhamento.status == ""
-        assert acompanhamento.status_pagamento == ""
+        # Test Acompanhamento rejects empty status
+        with pytest.raises(ValidationError):
+            Acompanhamento(
+                id_pedido=1,
+                cpf_cliente="123.456.789-00",
+                status="",
+                status_pagamento=StatusPagamento.PAGO,
+                itens=[ItemPedido(id_produto=1, quantidade=1)],
+                tempo_estimado="20 min",
+                atualizado_em=datetime.now(),
+            )
 
     def test_tempo_estimado_edge_cases(self):
         """Test tempo_estimado with various string formats"""
@@ -86,8 +86,8 @@ class TestModelValidation:
             acompanhamento = Acompanhamento(
                 id_pedido=1,
                 cpf_cliente="123.456.789-00",
-                status="preparando",
-                status_pagamento="pago",
+                status=StatusPedido.EM_PREPARACAO,
+                status_pagamento=StatusPagamento.PAGO,
                 itens=sample_itens,
                 tempo_estimado=tempo,
                 atualizado_em=datetime.now(),
@@ -113,8 +113,8 @@ class TestModelValidation:
             acompanhamento = Acompanhamento(
                 id_pedido=1,
                 cpf_cliente=cpf,
-                status="preparando",
-                status_pagamento="pago",
+                status=StatusPedido.EM_PREPARACAO,
+                status_pagamento=StatusPagamento.PAGO,
                 itens=sample_itens,
                 tempo_estimado="20 min",
                 atualizado_em=datetime.now(),
@@ -137,7 +137,7 @@ class TestModelSerialization:
             ],
             total_pedido=59.90,
             tempo_estimado="30 min",
-            status="criado",
+            status=StatusPedido.RECEBIDO,
             criado_em=datetime(2024, 1, 15, 10, 30, 0),
         )
 
@@ -170,8 +170,8 @@ class TestModelSerialization:
         """Test model fields information"""
         # Test ItemPedido fields
         item_fields = ItemPedido.model_fields
-        assert "id_produto" in item_fields
-        assert "quantidade" in item_fields
+        assert "id_produto" in item_fields.keys()
+        assert "quantidade" in item_fields.keys()
 
         # Test EventoPedido fields
         evento_fields = EventoPedido.model_fields
@@ -191,8 +191,8 @@ class TestModelSerialization:
         acompanhamento = Acompanhamento(
             id_pedido=1,
             cpf_cliente="123.456.789-00",
-            status="preparando",
-            status_pagamento="pago",
+            status=StatusPedido.EM_PREPARACAO,
+            status_pagamento=StatusPagamento.PAGO,
             itens=[ItemPedido(id_produto=1, quantidade=1)],
             tempo_estimado="20 min",
             atualizado_em=datetime.now(),
@@ -209,8 +209,8 @@ class TestModelSerialization:
         acompanhamento = Acompanhamento(
             id_pedido=1,
             cpf_cliente="123.456.789-00",
-            status="preparando",
-            status_pagamento="pago",
+            status=StatusPedido.EM_PREPARACAO,
+            status_pagamento=StatusPagamento.PAGO,
             itens=[ItemPedido(id_produto=1, quantidade=1)],
             tempo_estimado="20 min",
             atualizado_em=datetime.now(),
@@ -220,7 +220,7 @@ class TestModelSerialization:
         minimal_data = acompanhamento.model_dump(include={"id_pedido", "status"})
         assert len(minimal_data) == 2
         assert minimal_data["id_pedido"] == 1
-        assert minimal_data["status"] == "preparando"
+        assert minimal_data["status"] == StatusPedido.EM_PREPARACAO
 
 
 class TestModelPerformance:
@@ -240,7 +240,7 @@ class TestModelPerformance:
             itens=large_items_list,
             total_pedido=9999.99,
             tempo_estimado="60 min",
-            status="criado",
+            status=StatusPedido.RECEBIDO,
             criado_em=datetime.now(),
         )
 
@@ -268,7 +268,7 @@ class TestModelPerformance:
             itens=[ItemPedido(id_produto=i + 1, quantidade=1) for i in range(100)],
             total_pedido=999.99,
             tempo_estimado="45 min",
-            status="criado",
+            status=StatusPedido.RECEBIDO,
             criado_em=datetime.now(),
         )
 
@@ -283,11 +283,11 @@ class TestModelConstraints:
 
     def test_business_logic_status_transitions(self):
         """Test logical status transitions"""
-        # Test valid status progression
+        # Test valid status progression using enums
         valid_transitions = [
-            ("criado", "preparando"),
-            ("preparando", "pronto"),
-            ("pronto", "entregue"),
+            (StatusPedido.RECEBIDO, StatusPedido.EM_PREPARACAO),
+            (StatusPedido.EM_PREPARACAO, StatusPedido.PRONTO),
+            (StatusPedido.PRONTO, StatusPedido.FINALIZADO),
         ]
 
         sample_itens = [ItemPedido(id_produto=1, quantidade=1)]
@@ -297,7 +297,7 @@ class TestModelConstraints:
                 id_pedido=1,
                 cpf_cliente="123.456.789-00",
                 status=from_status,
-                status_pagamento="pago",
+                status_pagamento=StatusPagamento.PAGO,
                 itens=sample_itens,
                 tempo_estimado="20 min",
                 atualizado_em=datetime.now(),
@@ -309,12 +309,12 @@ class TestModelConstraints:
 
     def test_payment_status_logic(self):
         """Test payment status logic"""
-        # Test that certain order statuses should correlate with payment status
+        # Test that certain order statuses should correlate with payment status using enums
         payment_order_correlations = [
-            ("aguardando_pagamento", "pendente"),
-            ("preparando", "pago"),
-            ("pronto", "pago"),
-            ("entregue", "pago"),
+            (StatusPedido.RECEBIDO, StatusPagamento.PENDENTE),
+            (StatusPedido.EM_PREPARACAO, StatusPagamento.PAGO),
+            (StatusPedido.PRONTO, StatusPagamento.PAGO),
+            (StatusPedido.FINALIZADO, StatusPagamento.PAGO),
         ]
 
         sample_itens = [ItemPedido(id_produto=1, quantidade=1)]
@@ -352,7 +352,7 @@ class TestModelConstraints:
             itens=items,
             total_pedido=35.00,  # This should match calculated total
             tempo_estimado="30 min",
-            status="criado",
+            status=StatusPedido.RECEBIDO,
             criado_em=datetime.now(),
         )
 

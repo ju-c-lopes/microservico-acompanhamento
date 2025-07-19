@@ -121,7 +121,10 @@ Examples:
         # Check if pytest-cov is installed by trying to run pytest with --cov
         try:
             result = subprocess.run(
-                ["poetry", "run", "python", "-m", "pytest", "--help"], capture_output=True, text=True, check=False
+                ["poetry", "run", "python", "-m", "pytest", "--help"],
+                capture_output=True,
+                text=True,
+                check=False,
             )
             if "--cov" not in result.stdout:
                 raise RuntimeError("The 'pytest-cov' plugin is not installed.")

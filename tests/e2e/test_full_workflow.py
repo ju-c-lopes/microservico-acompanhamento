@@ -1,9 +1,7 @@
 from datetime import datetime
 
-import pytest
-
-from app.models.acompanhamento import (Acompanhamento, EventoPagamento,
-                                       EventoPedido, ItemPedido)
+from app.domain.order_state import StatusPagamento, StatusPedido
+from app.models.acompanhamento import (Acompanhamento, EventoPagamento, EventoPedido, ItemPedido)
 from app.models.events import EventoAcompanhamento
 
 
@@ -39,7 +37,7 @@ class TestFullOrderWorkflow:
         evento_pagamento = EventoPagamento(
             id_pagamento=999,
             id_pedido=evento_pedido.id_pedido,
-            status="pago",
+            status=StatusPagamento.PAGO,
             criado_em=timestamp,
         )
 
@@ -51,7 +49,7 @@ class TestFullOrderWorkflow:
         acompanhamento = Acompanhamento(
             id_pedido=evento_pedido.id_pedido,
             cpf_cliente=evento_pedido.cpf_cliente,
-            status="preparando",
+            status=StatusPedido.EM_PREPARACAO,
             status_pagamento=evento_pagamento.status,
             itens=evento_pedido.itens,
             tempo_estimado="25 min",
@@ -59,14 +57,14 @@ class TestFullOrderWorkflow:
         )
 
         # Verify preparation state
-        assert acompanhamento.status == "preparando"
+        assert acompanhamento.status == StatusPedido.EM_PREPARACAO
         assert acompanhamento.status_pagamento == "pago"
 
         # Step 4: Order is ready
         evento_pronto = EventoAcompanhamento(
             id_pedido=evento_pedido.id_pedido,
             status="pronto",
-            status_pagamento="pago",
+            status_pagamento=StatusPagamento.PAGO,
             tempo_estimado="Ready for pickup",
             atualizado_em=timestamp,
         )
@@ -79,7 +77,7 @@ class TestFullOrderWorkflow:
         evento_entregue = EventoAcompanhamento(
             id_pedido=evento_pedido.id_pedido,
             status="entregue",
-            status_pagamento="pago",
+            status_pagamento=StatusPagamento.PAGO,
             tempo_estimado=None,
             atualizado_em=timestamp,
         )
@@ -119,7 +117,7 @@ class TestFullOrderWorkflow:
         evento_pagamento = EventoPagamento(
             id_pagamento=1000,
             id_pedido=evento_pedido.id_pedido,
-            status="falhou",
+            status=StatusPagamento.FALHOU,
             criado_em=timestamp,
         )
 
@@ -127,7 +125,7 @@ class TestFullOrderWorkflow:
         acompanhamento = Acompanhamento(
             id_pedido=evento_pedido.id_pedido,
             cpf_cliente=evento_pedido.cpf_cliente,
-            status="aguardando_pagamento",
+            status=StatusPedido.RECEBIDO,
             status_pagamento=evento_pagamento.status,
             itens=evento_pedido.itens,
             tempo_estimado=None,
@@ -136,7 +134,7 @@ class TestFullOrderWorkflow:
 
         # Verify failed payment workflow
         assert evento_pagamento.status == "falhou"
-        assert acompanhamento.status == "aguardando_pagamento"
+        assert acompanhamento.status == StatusPedido.RECEBIDO
         assert acompanhamento.status_pagamento == "falhou"
         assert acompanhamento.tempo_estimado is None
 
@@ -165,7 +163,7 @@ class TestFullOrderWorkflow:
             payment = EventoPagamento(
                 id_pagamento=2000 + order.id_pedido,
                 id_pedido=order.id_pedido,
-                status="pago",
+                status=StatusPagamento.PAGO,
                 criado_em=timestamp,
             )
             payments.append(payment)
@@ -176,7 +174,7 @@ class TestFullOrderWorkflow:
             tracking = Acompanhamento(
                 id_pedido=order.id_pedido,
                 cpf_cliente=order.cpf_cliente,
-                status="preparando",
+                status=StatusPedido.EM_PREPARACAO,
                 status_pagamento=payment.status,
                 itens=order.itens,
                 tempo_estimado="15 min",

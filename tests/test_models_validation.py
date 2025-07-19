@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 import pytest
 from pydantic import ValidationError
 
+from app.domain.order_state import StatusPagamento, StatusPedido
 from app.models.acompanhamento import (Acompanhamento, EventoPagamento,
                                        EventoPedido, ItemPedido)
 
@@ -45,8 +46,8 @@ class TestModelConstraintsAndValidators:
             acompanhamento = Acompanhamento(
                 id_pedido=1,
                 cpf_cliente=cpf,
-                status="preparando",
-                status_pagamento="pago",
+                status=StatusPedido.EM_PREPARACAO,
+                status_pagamento=StatusPagamento.PAGO,
                 itens=sample_itens,
                 tempo_estimado="20 min",
                 atualizado_em=datetime.now(),
@@ -58,8 +59,8 @@ class TestModelConstraintsAndValidators:
             acompanhamento = Acompanhamento(
                 id_pedido=1,
                 cpf_cliente=cpf,
-                status="preparando",
-                status_pagamento="pago",
+                status=StatusPedido.EM_PREPARACAO,
+                status_pagamento=StatusPagamento.PAGO,
                 itens=sample_itens,
                 tempo_estimado="20 min",
                 atualizado_em=datetime.now(),
@@ -67,8 +68,13 @@ class TestModelConstraintsAndValidators:
             assert acompanhamento.cpf_cliente == cpf
 
     def test_status_enum_validation(self):
-        """Test status field validation (could be enhanced with Enum)"""
-        valid_order_statuses = ["criado", "preparando", "pronto", "entregue"]
+        """Test status field validation using enums"""
+        valid_order_statuses = [
+            StatusPedido.RECEBIDO,
+            StatusPedido.EM_PREPARACAO,
+            StatusPedido.PRONTO,
+            StatusPedido.FINALIZADO,
+        ]
         invalid_order_statuses = ["cancelado", "em_pausa", "invalid_status"]
 
         sample_itens = [ItemPedido(id_produto=1, quantidade=1)]
@@ -79,25 +85,25 @@ class TestModelConstraintsAndValidators:
                 id_pedido=1,
                 cpf_cliente="123.456.789-00",
                 status=status,
-                status_pagamento="pago",
+                status_pagamento=StatusPagamento.PAGO,
                 itens=sample_itens,
                 tempo_estimado="20 min",
                 atualizado_em=datetime.now(),
             )
             assert acompanhamento.status == status
 
-        # Test invalid statuses (currently all pass - might need validation)
+        # Test invalid statuses (should raise ValidationError)
         for status in invalid_order_statuses:
-            acompanhamento = Acompanhamento(
-                id_pedido=1,
-                cpf_cliente="123.456.789-00",
-                status=status,
-                status_pagamento="pago",
-                itens=sample_itens,
-                tempo_estimado="20 min",
-                atualizado_em=datetime.now(),
-            )
-            assert acompanhamento.status == status
+            with pytest.raises(ValidationError):
+                Acompanhamento(
+                    id_pedido=1,
+                    cpf_cliente="123.456.789-00",
+                    status=status,
+                    status_pagamento=StatusPagamento.PAGO,
+                    itens=sample_itens,
+                    tempo_estimado="20 min",
+                    atualizado_em=datetime.now(),
+                )
 
     def test_payment_status_validation(self):
         """Test payment status validation"""
@@ -111,12 +117,12 @@ class TestModelConstraintsAndValidators:
             )
             assert evento.status == status
 
-        # Test invalid payment statuses (currently all pass)
+        # Test invalid payment statuses (should raise ValidationError)
         for status in invalid_payment_statuses:
-            evento = EventoPagamento(
-                id_pagamento=1, id_pedido=1, status=status, criado_em=datetime.now()
-            )
-            assert evento.status == status
+            with pytest.raises(ValidationError):
+                EventoPagamento(
+                    id_pagamento=1, id_pedido=1, status=status, criado_em=datetime.now()
+                )
 
     def test_datetime_validation(self):
         """Test datetime validation constraints"""
@@ -126,13 +132,19 @@ class TestModelConstraintsAndValidators:
 
         # Test with future date (might need validation for business logic)
         evento = EventoPagamento(
-            id_pagamento=1, id_pedido=1, status="pago", criado_em=future_date
+            id_pagamento=1,
+            id_pedido=1,
+            status=StatusPagamento.PAGO,
+            criado_em=future_date,
         )
         assert evento.criado_em == future_date
 
         # Test with very old date
         evento = EventoPagamento(
-            id_pagamento=1, id_pedido=1, status="pago", criado_em=past_date
+            id_pagamento=1,
+            id_pedido=1,
+            status=StatusPagamento.PAGO,
+            criado_em=past_date,
         )
         assert evento.criado_em == past_date
 
@@ -147,7 +159,7 @@ class TestModelConstraintsAndValidators:
             itens=sample_itens,
             total_pedido=0.0,
             tempo_estimado="30 min",
-            status="criado",
+            status=StatusPedido.RECEBIDO,
             criado_em=datetime.now(),
         )
         assert evento.total_pedido == 0.0
@@ -159,7 +171,7 @@ class TestModelConstraintsAndValidators:
             itens=sample_itens,
             total_pedido=-10.50,
             tempo_estimado="30 min",
-            status="criado",
+            status=StatusPedido.RECEBIDO,
             criado_em=datetime.now(),
         )
         assert evento.total_pedido == -10.50
@@ -171,7 +183,7 @@ class TestModelConstraintsAndValidators:
             itens=sample_itens,
             total_pedido=999999.99,
             tempo_estimado="30 min",
-            status="criado",
+            status=StatusPedido.RECEBIDO,
             criado_em=datetime.now(),
         )
         assert evento.total_pedido == 999999.99
@@ -186,7 +198,7 @@ class TestModelConstraintsAndValidators:
                 itens=[],
                 total_pedido=0.0,
                 tempo_estimado="30 min",
-                status="criado",
+                status=StatusPedido.RECEBIDO,
                 criado_em=datetime.now(),
             )
         assert "Order must have at least one item" in str(exc_info.value)
@@ -196,8 +208,8 @@ class TestModelConstraintsAndValidators:
             Acompanhamento(
                 id_pedido=1,
                 cpf_cliente="123.456.789-00",
-                status="preparando",
-                status_pagamento="pago",
+                status=StatusPedido.EM_PREPARACAO,
+                status_pagamento=StatusPagamento.PAGO,
                 itens=[],
                 tempo_estimado="20 min",
                 atualizado_em=datetime.now(),
@@ -213,7 +225,10 @@ class TestModelConstraintsAndValidators:
 
         # Test with negative IDs (might need validation for other models, but allowed for EventoPagamento)
         evento = EventoPagamento(
-            id_pagamento=-1, id_pedido=-1, status="pago", criado_em=datetime.now()
+            id_pagamento=-1,
+            id_pedido=-1,
+            status=StatusPagamento.PAGO,
+            criado_em=datetime.now(),
         )
         assert evento.id_pagamento == -1
         assert evento.id_pedido == -1
@@ -239,8 +254,8 @@ class TestModelConstraintsAndValidators:
             acompanhamento = Acompanhamento(
                 id_pedido=1,
                 cpf_cliente="123.456.789-00",
-                status="preparando",
-                status_pagamento="pago",
+                status=StatusPedido.EM_PREPARACAO,
+                status_pagamento=StatusPagamento.PAGO,
                 itens=sample_itens,
                 tempo_estimado=tempo,
                 atualizado_em=datetime.now(),
@@ -260,7 +275,7 @@ class TestModelConsistency:
             itens=[ItemPedido(id_produto=1, quantidade=2)],
             total_pedido=59.90,
             tempo_estimado="30 min",
-            status="criado",
+            status=StatusPedido.RECEBIDO,
             criado_em=datetime.now(),
         )
 
@@ -268,8 +283,8 @@ class TestModelConsistency:
         acompanhamento = Acompanhamento(
             id_pedido=evento_pedido.id_pedido,
             cpf_cliente=evento_pedido.cpf_cliente,
-            status="preparando",  # Status progressed
-            status_pagamento="pago",
+            status=StatusPedido.EM_PREPARACAO,  # Status progressed
+            status_pagamento=StatusPagamento.PAGO,
             itens=evento_pedido.itens,
             tempo_estimado="25 min",  # Time updated
             atualizado_em=datetime.now(),
@@ -284,14 +299,17 @@ class TestModelConsistency:
         """Test consistency between EventoPagamento and Acompanhamento"""
         # Create EventoPagamento
         evento_pagamento = EventoPagamento(
-            id_pagamento=999, id_pedido=12345, status="pago", criado_em=datetime.now()
+            id_pagamento=999,
+            id_pedido=12345,
+            status=StatusPagamento.PAGO,
+            criado_em=datetime.now(),
         )
 
         # Create corresponding Acompanhamento
         acompanhamento = Acompanhamento(
             id_pedido=evento_pagamento.id_pedido,
             cpf_cliente="123.456.789-00",
-            status="preparando",
+            status=StatusPedido.EM_PREPARACAO,
             status_pagamento=evento_pagamento.status,
             itens=[ItemPedido(id_produto=1, quantidade=1)],
             tempo_estimado="20 min",
@@ -308,13 +326,18 @@ class TestModelConsistency:
 
         # Test order status progression
         status_progression = [
-            "aguardando_pagamento",
-            "preparando",
-            "pronto",
-            "entregue",
+            StatusPedido.RECEBIDO,
+            StatusPedido.EM_PREPARACAO,
+            StatusPedido.PRONTO,
+            StatusPedido.FINALIZADO,
         ]
 
-        payment_progression = ["pendente", "pago", "pago", "pago"]
+        payment_progression = [
+            StatusPagamento.PENDENTE,
+            StatusPagamento.PAGO,
+            StatusPagamento.PAGO,
+            StatusPagamento.PAGO,
+        ]
 
         for i, (order_status, payment_status) in enumerate(
             zip(status_progression, payment_progression)
@@ -338,8 +361,14 @@ class TestModelConsistency:
 
         # Test potentially invalid combinations
         invalid_combinations = [
-            ("entregue", "pendente"),  # Delivered but not paid
-            ("aguardando_pagamento", "pago"),  # Waiting payment but already paid
+            (
+                StatusPedido.FINALIZADO,
+                StatusPagamento.PENDENTE,
+            ),  # Delivered but not paid
+            (
+                StatusPedido.RECEBIDO,
+                StatusPagamento.PAGO,
+            ),  # Waiting payment but already paid
         ]
 
         for order_status, payment_status in invalid_combinations:
@@ -385,7 +414,7 @@ class TestModelExtensions:
             ],
             total_pedido=59.90,
             tempo_estimado="30 min",
-            status="criado",
+            status=StatusPedido.RECEBIDO,
             criado_em=datetime.now(),
         )
 
@@ -411,35 +440,35 @@ class TestModelExtensions:
 
         # 1. Test maximum string lengths
         long_cpf = "1" * 100  # Very long CPF
-        long_status = "status_" * 50  # Very long status
 
+        # Test with valid enum instead of long status string
         acompanhamento = Acompanhamento(
             id_pedido=1,
             cpf_cliente=long_cpf,
-            status=long_status,
-            status_pagamento="pago",
+            status=StatusPedido.RECEBIDO,  # Using valid enum
+            status_pagamento=StatusPagamento.PAGO,
             itens=[ItemPedido(id_produto=1, quantidade=1)],
             tempo_estimado="20 min",
             atualizado_em=datetime.now(),
         )
 
         assert len(acompanhamento.cpf_cliente) == 100
-        assert len(acompanhamento.status) == 350  # 7 * 50
+        assert acompanhamento.status == StatusPedido.RECEBIDO
 
         # 2. Test special characters in fields
         special_chars_cpf = "123.456.789-00@#$%"
-        special_chars_status = "preparando 🍕 com ❤️"
 
         acompanhamento = Acompanhamento(
             id_pedido=1,
             cpf_cliente=special_chars_cpf,
-            status=special_chars_status,
-            status_pagamento="pago",
+            status=StatusPedido.EM_PREPARACAO,  # Using valid enum
+            status_pagamento=StatusPagamento.PAGO,
             itens=[ItemPedido(id_produto=1, quantidade=1)],
-            tempo_estimado="20 min",
+            tempo_estimado="20 min 🍕 com ❤️",  # Emojis can be in tempo_estimado field
             atualizado_em=datetime.now(),
         )
 
         assert "@#$%" in acompanhamento.cpf_cliente
-        assert "🍕" in acompanhamento.status
-        assert "❤️" in acompanhamento.status
+        assert acompanhamento.status == StatusPedido.EM_PREPARACAO
+        assert acompanhamento.tempo_estimado and "🍕" in acompanhamento.tempo_estimado
+        assert acompanhamento.tempo_estimado and "❤️" in acompanhamento.tempo_estimado
