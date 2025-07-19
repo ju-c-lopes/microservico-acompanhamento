@@ -43,6 +43,7 @@ Available commands:
   fast            - Run fast tests (unit + integration)
   ci              - Run tests suitable for CI (all except performance)
   coverage        - Run all tests with coverage report
+  repository      - Run repository tests only
   
   # Specific model tests:
   item            - Run ItemPedido tests
@@ -83,6 +84,10 @@ Examples:
     elif command == "e2e":
         cmd = cmd_base + ["tests/e2e/"] + common_opts
         return run_command(cmd, "Running end-to-end tests")
+
+    elif command == "repository":
+        cmd = cmd_base + ["tests/unit/repository/"] + common_opts
+        return run_command(cmd, "Running repository tests")
 
     elif command == "models":
         unit_result = run_command(

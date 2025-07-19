@@ -4,7 +4,7 @@ from datetime import datetime
 import pytest
 
 from app.domain.order_state import StatusPagamento, StatusPedido
-from app.models.acompanhamento import (Acompanhamento, EventoPedido, ItemPedido)
+from app.models.acompanhamento import Acompanhamento, EventoPedido, ItemPedido
 
 
 class TestModelPerformance:
