@@ -1,9 +1,17 @@
+import os
 from datetime import datetime
 from typing import List
 
 import pytest
 
 from app.models.acompanhamento import ItemPedido
+
+# Configura variáveis de ambiente necessárias para os testes
+os.environ.setdefault("ENVIRONMENT", "test")
+os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///test.db")
+os.environ.setdefault("APP_NAME", "Test Acompanhamento Service")
+os.environ.setdefault("SECRET_KEY", "test-secret-key")
+os.environ.setdefault("DEBUG", "true")
 
 
 @pytest.fixture
