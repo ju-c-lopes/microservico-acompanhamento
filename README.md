@@ -1,272 +1,167 @@
-## Fase 4 Tech Challenge
+# 🍔 Microserviço de Acompanhamento - Tech Challenge Fase 4
 
----
+[![CI/CD Pipeline](https://github.com/ju-c-lopes/microservico-acompanhamento/actions/workflows/ci.yml/badge.svg)](https://github.com/ju-c-lopes/microservico-acompanhamento/actions/workflows/ci.yml)
+[![Tests](https://github.com/ju-c-lopes/microservico-acompanhamento/actions/workflows/test.yml/badge.svg)](https://github.com/ju-c-lopes/microservico-acompanhamento/actions/workflows/test.yml)
+[![Coverage](coverage.svg)](htmlcov/index.html)
 
-Primeiro esboço de estrutura
+Microserviço responsável pelo acompanhamento de pedidos em uma lanchonete, desenvolvido com FastAPI e arquitetura limpa.
 
-```bash
-acompanhamento/
-├── app
-│   ├── api
-│   │   ├── dependencies.py
-│   │   ├── __init__.py
-│   │   └── v1
-│   │       ├── acompanhamento.py
-│   │       └── __init__.py
-│   ├── core
-│   │   ├── config.py
-│   │   ├── __init__.py
-│   │   └── kafka.py
-│   ├── db
-│   │   ├── base.py
-│   │   └── __init__.py
-│   ├── domain
-│   │   ├── acompanhamento_service.py
-│   │   ├── __init__.py
-│   │   └── order_state.py
-│   ├── __init__.py
-│   ├── main.py
-│   ├── models
-│   │   ├── acompanhamento.py
-│   │   ├── events.py
-│   │   └── __init__.py
-│   └── repository
-│       ├── acompanhamento_repository.py
-│       └── __init__.py
-├── Dockerfile
-├── README.md
-└── tests
-    ├── __init__.py
-    └── test_acompanhamento.py
+## 🎯 Sobre o Projeto
 
-10 directories, 23 files
+Este microserviço gerencia o ciclo de vida dos pedidos, desde o recebimento até a finalização, integrando informações de pedidos e pagamentos para fornecer uma experiência completa de acompanhamento aos clientes.
+
+### ✨ Funcionalidades Principais
+
+-   📦 **Acompanhamento de Pedidos**: Tracking completo do status dos pedidos
+-   💰 **Integração de Pagamentos**: Consolidação de informações de pagamento
+-   ⏰ **Cálculo de Tempo Estimado**: Estimativas inteligentes baseadas nos itens
+-   🔄 **Gerenciamento de Estados**: Transições validadas entre status
+-   📊 **Fila de Pedidos**: Organização e priorização de pedidos
+
+### 🏗️ Arquitetura
+
+```
+📁 Estrutura em Camadas
+├── 🌐 API Layer (FastAPI)      # Interface externa
+├── 🧠 Domain Layer             # Regras de negócio
+├── 💾 Repository Layer         # Acesso a dados
+├── 📋 Models Layer (Pydantic)  # Estruturas de dados
+└── ⚙️  Core Layer              # Configurações
 ```
 
-## 🚀 Pipeline CI/CD
+**Principais Componentes:**
 
-Este projeto inclui um pipeline CI/CD abrangente usando GitHub Actions com múltiplos workflows:
+-   **Models**: `ItemPedido`, `EventoPedido`, `EventoPagamento`, `Acompanhamento`
+-   **Status**: Recebido → Em Preparação → Pronto → Finalizado
+-   **Pagamentos**: Pendente → Pago → Falhou
 
-### 📋 Workflows Disponíveis
+## 🚀 Como Usar
 
-#### 1. **Pipeline Principal CI/CD** (`.github/workflows/ci.yml`)
+### 📋 Pré-requisitos
 
--   **Gatilhos**: Push para `main`/`develop`, Pull Requests
--   **Funcionalidades**:
-    -   ✅ Testes em múltiplas versões do Python (3.11, 3.12)
-    -   ✅ Cache de dependências com Poetry
-    -   ✅ Suite de testes abrangente (unit, integration, performance, e2e)
-    -   ✅ Relatório de cobertura de código
-    -   ✅ Escaneamento de segurança
-    -   ✅ Build da imagem Docker
-    -   ✅ Validação de quality gate
+-   Python 3.11+
+-   Poetry
+-   Docker (opcional)
 
-#### 2. **Workflow de Testes** (`.github/workflows/test.yml`)
-
--   **Gatilhos**: Eventos de push e PR
--   **Funcionalidades**:
-    -   ✅ Execução organizada de testes por categoria
-    -   ✅ Validação do test runner customizado
-    -   ✅ Verificações de qualidade de código (black, ruff, mypy)
-    -   ✅ Artefatos de relatórios de cobertura
-
-#### 3. **Verificação de Pull Request** (`.github/workflows/pr-check.yml`)
-
--   **Gatilhos**: Apenas Pull Requests
--   **Funcionalidades**:
-    -   ✅ Testes de validação rápidos
-    -   ✅ Validação de regras de negócio
-    -   ✅ Teste de importação de models
-    -   ✅ Relatórios de resumo do PR
-
-#### 4. **Deploy** (`.github/workflows/deploy.yml`)
-
--   **Gatilhos**: Push para `main`, dispatch manual
--   **Funcionalidades**:
-    -   ✅ Proteção do ambiente de produção
-    -   ✅ Suite completa de testes antes do deploy
-    -   ✅ Build e teste da imagem Docker
-    -   ✅ Escaneamento de vulnerabilidades de segurança
-
-#### 5. **Badge de Cobertura** (`.github/workflows/badge.yml`)
-
--   **Gatilhos**: Eventos de push e PR
--   **Funcionalidades**:
-    -   ✅ Geração automática de badge de cobertura
-    -   ✅ Atualizações de badge no README
-
-### 🧪 Categorias de Testes
-
-Nossa suite de testes está organizada em categorias que executam automaticamente:
+### ⚡ Instalação Rápida
 
 ```bash
-# Unit Tests (rápidos, isolados)
-tests/unit/models/          # Testes de validação de models
-tests/unit/schemas/         # Testes de validação de schemas
+# 1. Clonar o repositório
+git clone https://github.com/ju-c-lopes/microservico-acompanhamento.git
+cd microservico-acompanhamento
 
-# Integration Tests (interação entre componentes)
-tests/integration/          # Testes de consistência de models
+# 2. Instalar dependências
+poetry install
 
-# Performance Tests (carga e velocidade)
-tests/performance/          # Benchmarks de performance dos models
+# 3. Executar testes
+python run_tests.py all
 
-# End-to-End Tests (fluxo completo)
-tests/e2e/                  # Cenários completos de negócio
+# 4. Executar a aplicação (quando disponível)
+poetry run uvicorn app.main:app --reload
 ```
 
-### 📊 Métricas de Qualidade
-
--   **Cobertura de Testes**: 90%+ mantida automaticamente
--   **Validação de Regras de Negócio**: ✅ Aplicada
--   **Suporte Multi-Python**: 3.11, 3.12
--   **Escaneamento de Segurança**: Scanner de vulnerabilidades Trivy
--   **Qualidade de Código**: Verificações opcionais de linting e formatação
-
-### 🔧 Executando Testes Localmente
+### 🧪 Executando Testes
 
 ```bash
-# Usando nosso test runner customizado
-python run_tests.py unit           # Apenas unit tests
-python run_tests.py integration    # Apenas integration tests
-python run_tests.py performance    # Apenas performance tests
-python run_tests.py e2e            # Apenas end-to-end tests
-python run_tests.py all            # Todos os testes
-python run_tests.py coverage       # Todos os testes com cobertura
+# Executar todos os testes
+python run_tests.py all
 
-# Usando pytest diretamente
-poetry run pytest tests/unit/                    # Unit tests
-poetry run pytest tests/ --cov=app/models        # Com cobertura
-poetry run pytest -m performance                 # Apenas performance tests
+# Testes por categoria
+python run_tests.py unit           # Testes unitários (rápidos)
+python run_tests.py integration    # Testes de integração
+python run_tests.py performance    # Testes de performance
+python run_tests.py e2e            # Testes end-to-end
+
+# Testes por camada
+python run_tests.py models         # Testes de models
+python run_tests.py api            # Testes da API
+python run_tests.py schemas        # Testes de schemas
+
+# Com cobertura
+python run_tests.py coverage
 ```
 
-### 🏷️ Status Badges
-
-![CI/CD Pipeline](https://github.com/ju-c-lopes/microservico-acompanhamento/actions/workflows/ci.yml/badge.svg)
-![Tests](https://github.com/ju-c-lopes/microservico-acompanhamento/actions/workflows/test.yml/badge.svg)
-![Coverage](coverage.svg)
-
-### 🛡️ Segurança e Qualidade
-
--   **Escaneamento Automático de Segurança**: Scanner de vulnerabilidades Trivy
--   **Segurança de Dependências**: Verificações Safety para vulnerabilidades conhecidas
--   **Qualidade de Código**: Linting opcional com ruff e formatação com black
--   **Verificação de Tipos**: Type checking opcional com mypy
--   **Quality Gates**: Previnem merge se os testes falharem
-
-### 🚀 Processo de Deploy
-
-1. **Desenvolvimento**: Trabalhar na branch `develop`
-2. **Pull Request**: Validação automática do PR executada
-3. **Code Review**: Processo de revisão manual
-4. **Merge para Main**: Aciona o pipeline CI/CD completo
-5. **Deploy**: Imagem Docker construída e pronta para produção
-
-O pipeline garante alta qualidade de código e previne regressões através de testes automatizados abrangentes.
-
-## 🛡️ Configuração de Proteção de Branch
-
-Para proteger adequadamente a branch `main` e aplicar o pipeline CI/CD, configure as seguintes regras de proteção de branch no GitHub:
-
-### 📋 Configuração de Proteção de Branch no GitHub
-
-1. **Vá para Configurações do Repositório** → **Branches**
-2. **Adicione Regra** para a branch `main`
-3. **Configure as seguintes configurações**:
-
-#### ✅ **Configurações Obrigatórias:**
-
--   ☑️ **Exigir pull request antes do merge**
-
-    -   ☑️ Exigir aprovações: `1` (ou mais)
-    -   ☑️ Descartar aprovações de PR obsoletas quando novos commits são enviados
-    -   ☑️ Exigir revisão de code owners (se você tiver arquivo CODEOWNERS)
-
--   ☑️ **Exigir que verificações de status passem antes do merge**
-
-    -   ☑️ Exigir que branches estejam atualizadas antes do merge
-    -   **Verificações de status obrigatórias** (adicione estes nomes exatos):
-        -   `required-checks` (do main-branch-protection.yml)
-        -   `test (3.11)` (do ci.yml)
-        -   `test (3.12)` (do ci.yml)
-        -   `validate-pr` (do pr-check.yml)
-
--   ☑️ **Exigir resolução de conversas antes do merge**
--   ☑️ **Exigir commits assinados** (recomendado)
--   ☑️ **Exigir histórico linear** (recomendado)
--   ☑️ **Não permitir contornar as configurações acima**
-
-#### 🔒 **Configurações Administrativas:**
-
--   ☑️ **Restringir pushes que criam arquivos** (opcional)
--   ☑️ **Restringir pushes que deletam arquivos** (opcional)
--   ❌ **Permitir force pushes** (manter desabilitado)
--   ❌ **Permitir deleções** (manter desabilitado)
-
-### 🔄 **Fluxo de Trabalho Recomendado:**
-
-```mermaid
-graph LR
-    A[Trabalho do Desenvolvedor] --> B[branch develop]
-    B --> C[Criar PR para main]
-    C --> D[Testes Automatizados Executam]
-    D --> E{Todas as Verificações Passaram?}
-    E -->|Sim| F[Code Review]
-    E -->|Não| G[Corrigir Problemas]
-    G --> C
-    F --> H{Aprovado?}
-    H -->|Sim| I[Merge para main]
-    H -->|Não| J[Endereçar Feedback]
-    J --> C
-    I --> K[Deploy para Produção]
-```
-
-### 🧪 **Verificações Obrigatórias para Branch Main:**
-
-Seu pipeline CI/CD aplica estes requisitos para qualquer PR para main:
-
-1. **✅ Unit Tests** - Todos os testes de model e schema devem passar
-2. **✅ Integration Tests** - Testes de interação entre componentes devem passar
-3. **✅ Performance Tests** - Benchmarks de performance devem passar
-4. **✅ E2E Tests** - Testes de fluxo end-to-end devem passar
-5. **✅ Verificação de Cobertura** - Cobertura mínima de 90% exigida
-6. **✅ Regras de Negócio** - Todas as regras de validação Pydantic devem funcionar corretamente
-
-### 🚫 **O que é Bloqueado:**
-
--   ❌ **Pushes diretos para main** - Todas as mudanças devem passar por PR
--   ❌ **Merge sem testes** - Todas as verificações obrigatórias devem passar
--   ❌ **Merge com baixa cobertura** - Cobertura mínima de 90% aplicada
--   ❌ **Merge com regras de negócio quebradas** - Regras de validação devem funcionar
--   ❌ **Force pushes** - Histórico não pode ser reescrito
--   ❌ **Mudanças não revisadas** - Pelo menos 1 aprovação necessária
-
-### 🎯 **Benefícios desta Configuração:**
-
--   **Garantia de Qualidade**: Apenas código testado e revisado chega ao main
--   **Proteção de Regras de Negócio**: Validações críticas não podem ser quebradas
--   **Segurança de Deploy**: Branch main está sempre deployável
--   **Colaboração em Equipe**: Força processo de code review
--   **Trilha de Auditoria**: Todas as mudanças rastreadas através de PRs
--   **Segurança de Rollback**: Histórico linear facilita rollbacks
-
-### 🚀 **Guia Rápido para Novos Contribuidores:**
+### 🐳 Docker
 
 ```bash
-# 1. Criar feature branch a partir do develop
+# Build da imagem
+docker build -t acompanhamento .
+
+# Executar com docker-compose
+docker-compose up -d
+```
+
+## 📊 Estado Atual do Projeto
+
+### ✅ Implementado
+
+-   **✅ Modelos de Dados Completos** (Pydantic)
+
+    -   ItemPedido, EventoPedido, EventoPagamento, Acompanhamento
+    -   Validações de negócio integradas
+    -   Enums de status com valores em português
+
+-   **✅ Suite de Testes Robusta** (368+ testes)
+
+    -   Unit tests (isolados e rápidos)
+    -   Integration tests (interação entre componentes)
+    -   Performance tests (benchmarks)
+    -   End-to-end tests (fluxos completos)
+    -   Schema tests (validação FastAPI)
+
+-   **✅ Test Runner Customizado**
+
+    -   15+ comandos especializados
+    -   Execução por categoria ou camada
+    -   Relatórios de cobertura
+
+-   **✅ Pipeline CI/CD Completo**
+    -   Testes automáticos em Python 3.11 e 3.12
+    -   Quality gates obrigatórios
+    -   Proteção de branch main
+    -   Escaneamento de segurança
+
+### 🚧 Em Desenvolvimento
+
+-   **API Endpoints** (FastAPI)
+-   **Repository Implementation** (SQLAlchemy)
+-   **Kafka Integration** (Event Streaming)
+-   **Database Migrations** (Alembic)
+
+## 📚 Documentação
+
+-   📖 [**Arquitetura**](documentation/ARCHITECTURE.md) - Estrutura e design do projeto
+-   🧪 [**Guia de Testes**](documentation/TESTING_GUIDE.md) - Como executar e organizar testes
+-   🚀 [**Pipeline CI/CD**](documentation/CI_CD_PIPELINE.md) - Workflows e automações
+-   🛡️ [**Proteção de Branch**](documentation/BRANCH_PROTECTION.md) - Configurações de segurança
+
+## 👥 Contribuindo
+
+```bash
+# 1. Criar feature branch
 git checkout develop
 git pull origin develop
-git checkout -b feature/nome-da-sua-feature
+git checkout -b feature/sua-feature
 
-# 2. Fazer suas mudanças e testar localmente
+# 2. Desenvolver e testar
 python run_tests.py all
 
 # 3. Commit e push
 git add .
-git commit -m "feat: descrição da sua feature"
-git push origin feature/nome-da-sua-feature
+git commit -m "feat: sua descrição"
+git push origin feature/sua-feature
 
-# 4. Criar PR para main via interface do GitHub
-# 5. Aguardar testes automatizados e revisão
-# 6. Fazer merge após aprovação e todas as verificações passarem
+# 4. Criar Pull Request para main
 ```
 
-Esta configuração garante que sua branch main esteja sempre estável e deployável! 🛡️
+## 📈 Métricas de Qualidade
+
+-   **Testes**: 368+ testes executados automaticamente
+-   **Cobertura**: 90%+ mantida
+-   **Performance**: < 2s para suite completa
+-   **Segurança**: Escaneamento automático de vulnerabilidades
+-   **Qualidade**: Validações de código obrigatórias
+
+---
+
+**Tech Challenge FIAP - Fase 4** | Desenvolvido com ❤️ e FastAPI
