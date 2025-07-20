@@ -1,5 +1,5 @@
 """
-Testes de integração e edge cases para schemas da API de acompanhamento.
+Testes de integração e edge cases para schemas da API de documentação.
 Foco em interoperabilidade, performance e casos extremos.
 """
 
