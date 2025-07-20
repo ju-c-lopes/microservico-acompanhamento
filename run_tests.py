@@ -45,6 +45,8 @@ Available commands:
   coverage        - Run all tests with coverage report
   repository      - Run repository tests only
   service         - Run service layer tests only
+  api             - Run API layer tests only (schemas, dependencies, config)
+  schemas         - Run schema validation tests only
   
   # Specific model tests:
   item            - Run ItemPedido tests
@@ -93,6 +95,19 @@ Examples:
     elif command == "service":
         cmd = cmd_base + ["tests/unit/service/"] + common_opts
         return run_command(cmd, "Running service layer tests")
+
+    elif command == "api":
+        cmd = cmd_base + ["tests/unit/api/"] + common_opts
+        return run_command(cmd, "Running API layer tests")
+
+    elif command == "schemas":
+        schema_files = [
+            "tests/unit/api/test_request_schemas.py",
+            "tests/unit/api/test_response_schemas.py",
+            "tests/unit/api/test_schema_integration.py",
+        ]
+        cmd = cmd_base + schema_files + common_opts
+        return run_command(cmd, "Running schema validation tests")
 
     elif command == "models":
         unit_result = run_command(
