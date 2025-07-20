@@ -478,4 +478,3 @@ class TestErrorHandlingScenarios:
 
                     assert exc_info.value.status_code == expected_status
 
-                    assert exc_info.value.status_code == expected_status
