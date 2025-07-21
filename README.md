@@ -101,7 +101,13 @@ docker-compose up -d
     -   Validações de negócio integradas
     -   Enums de status com valores em português
 
--   **✅ Suite de Testes Robusta** (368+ testes)
+-   **✅ API REST Completa** (FastAPI)
+
+    -   5 endpoints implementados e funcionais
+    -   Validação automática via Pydantic
+    -   Error handling e dependency injection
+
+-   **✅ Suite de Testes Robusta** (402 testes)
 
     -   Unit tests (isolados e rápidos)
     -   Integration tests (interação entre componentes)
@@ -123,8 +129,8 @@ docker-compose up -d
 
 ### 🚧 Em Desenvolvimento
 
--   **API Endpoints** (FastAPI)
 -   **Repository Implementation** (SQLAlchemy)
+-   **Database Integration** (MySQL via RDS)
 -   **Kafka Integration** (Event Streaming)
 -   **Database Migrations** (Alembic)
 
@@ -156,9 +162,9 @@ git push origin feature/sua-feature
 
 ## 📈 Métricas de Qualidade
 
--   **Testes**: 368+ testes executados automaticamente
--   **Cobertura**: 90%+ mantida
--   **Performance**: < 2s para suite completa
+-   **Testes**: 402 testes executados automaticamente
+-   **Cobertura**: 91% atual (superou meta 90%)
+-   **Performance**: ~1.4s para suite completa
 -   **Segurança**: Escaneamento automático de vulnerabilidades
 -   **Qualidade**: Validações de código obrigatórias
 

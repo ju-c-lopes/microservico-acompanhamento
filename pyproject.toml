@@ -26,6 +26,8 @@ ruff = "*"
 mypy = "*"
 trio = "^0.30.0"
 aiosqlite = "^0.21.0"
+httpx = "^0.28.1"
+psutil = "^7.0.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
