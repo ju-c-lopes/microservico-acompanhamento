@@ -219,3 +219,22 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Development-only files (NOT committed)
+# Development database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Development Alembic migrations (NOT committed)
+alembic_dev/versions/*.py
+!alembic_dev/versions/__init__.py
+
+# Keep development Alembic structure but exclude actual migrations
+alembic_dev/__pycache__/
+# Keep the lines below
+alembic_dev/
+alembic_dev.ini
+
+# Copilot instructions
+copilot-instructions.md

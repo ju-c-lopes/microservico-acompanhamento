@@ -1,3 +1,10 @@
+"""
+Production Alembic environment.
+This handles MySQL database migrations for production/staging environments.
+These migrations ARE committed to repository.
+"""
+
+import os
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config, pool
@@ -10,35 +17,41 @@ from app.db.base import Base
 config = context.config
 
 # Interpret the config file for Python logging.
-# This line sets up loggers basically.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# add your model's MetaData object here
-# for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymNoneodel.Base.metadata
+# add your model's MetaData object here for 'autogenerate' support
 target_metadata = Base.metadata
 
-# other values from the config, defined by the needs of env.py,
-# can be acquired:
-# my_important_option = config.get_main_option("my_important_option")
-# ... etc.
+
+def get_database_url():
+    """
+    Get database URL for production environment.
+    Expects MySQL database URL and converts async to sync for Alembic.
+    """
+    # Check environment variable first (production usage)
+    env_url = os.environ.get("DATABASE_URL")
+    if env_url:
+        # Convert async MySQL to sync for Alembic
+        if "aiomysql" in env_url:
+            env_url = env_url.replace("mysql+aiomysql://", "mysql+pymysql://")
+        return env_url
+
+    # Fall back to alembic config
+    config_url = config.get_main_option("sqlalchemy.url")
+    if config_url:
+        return config_url
+
+    # This should not happen in production
+    raise ValueError(
+        "DATABASE_URL must be set for production migrations. "
+        "Expected MySQL URL format: mysql+aiomysql://user:pass@host:port/db"
+    )
 
 
 def run_migrations_offline() -> None:
-    """Run migrations in 'offline' mode.
-
-    This configures the context with just a URL
-    and not an Engine, though an Engine is acceptable
-    here as well.  By skipping the Engine creation
-    we don't even need a DBAPI to be available.
-
-    Calls to context.execute() here emit the given string to the
-    script output.
-
-    """
-    url = config.get_main_option("sqlalchemy.url")
+    """Run migrations in 'offline' mode for production."""
+    url = get_database_url()
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -51,16 +64,18 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    """Run migrations in 'online' mode.
+    """Run migrations in 'online' mode for production MySQL."""
+    database_url = get_database_url()
 
-    In this scenario we need to create an Engine
-    and associate a connection with the context.
+    # Override the alembic config with our dynamic URL
+    configuration = config.get_section(config.config_ini_section, {})
+    configuration["sqlalchemy.url"] = database_url
 
-    """
+    # MySQL-specific configuration for production
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
+        configuration,
         prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
+        poolclass=pool.NullPool,  # Standard for MySQL production
     )
 
     with connectable.connect() as connection:

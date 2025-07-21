@@ -11,6 +11,7 @@ acompanhamento/
 │   │       └── acompanhamento.py # Endpoints do microserviço
 │   ├── core/                     # Configurações centrais
 │   │   ├── config.py             # Configurações da aplicação
+│   │   ├── exceptions.py         # Exceções customizadas
 │   │   └── kafka.py              # Configurações do Kafka
 │   ├── db/                       # Camada de banco de dados
 │   │   ├── base.py               # Configurações base do DB
@@ -73,9 +74,9 @@ acompanhamento/
 
 ### 5. **Core Layer** (`app/core/`)
 
--   **Responsabilidade**: Configurações, utilitários centrais
+-   **Responsabilidade**: Configurações, utilitários centrais, exceções customizadas
 -   **Tecnologia**: Pydantic Settings
--   **Componentes**: Config, Kafka Setup, Database Config
+-   **Componentes**: Config, Kafka Setup, Database Config, Custom Exceptions
 
 ## 🔄 Fluxo de Dados
 
@@ -130,7 +131,66 @@ graph TB
 -   **StatusPedido**: `Recebido`, `Em Preparação`, `Pronto`, `Finalizado`
 -   **StatusPagamento**: `Pendente`, `Pago`, `Falhou`
 
-## 🔧 Configurações
+## � Endpoints da API
+
+### Endpoints Implementados:
+
+1. **Health Check**
+
+    - `GET /` - Status básico da aplicação
+    - `GET /health` - Health check detalhado com timestamp
+
+2. **Acompanhamento de Pedidos**
+    - `GET /acompanhamento/{id_pedido}` - Buscar pedido por ID
+    - `PUT /acompanhamento/{id_pedido}/status` - Atualizar status do pedido
+    - `GET /acompanhamento/fila/pedidos` - Listar fila de pedidos
+    - `GET /acompanhamento/cliente/{cpf}` - Histórico do cliente
+
+### Padrões de Response:
+
+-   **Sucesso**: Status 200 com dados estruturados
+-   **Erro**: Status 4xx/5xx com detalhes do erro
+-   **Validação**: Automática via Pydantic
+-   **Documentação**: Swagger automático em `/docs`
+
+## 🧪 Estratégia de Testes
+
+### **Cobertura Total: 402 testes | 91% coverage**
+
+### 1. **Testes Unitários** (`tests/unit/`)
+
+-   **295 testes** distribuídos por camada
+-   **API Layer**: 152 testes (endpoints, schemas, dependencies)
+-   **Models Layer**: 66 testes (validação, serialização)
+-   **Service Layer**: 77 testes (business logic, calculations, error handling)
+
+### 2. **Testes de Integração** (`tests/integration/`)
+
+-   **26 testes** de integração entre componentes
+-   **API Integration**: Workflows completos end-to-end
+-   **Model Consistency**: Validação entre diferentes models
+
+### 3. **Testes de Performance** (`tests/performance/`)
+
+-   **46 testes** de performance e throughput
+-   **Memory Monitoring**: Usando psutil para controle de memória
+-   **Concurrent Testing**: Simulação de carga e stress
+-   **Response Time**: Benchmarks de latência
+
+### 4. **Testes E2E** (`tests/e2e/`)
+
+-   **3 testes** de workflow completo
+-   **Order Lifecycle**: Fluxo completo do pedido
+-   **Error Recovery**: Cenários de falha e recuperação
+
+### Ferramentas de Teste:
+
+-   **Test Runner**: `python run_tests.py` (customizado)
+-   **Coverage**: pytest-cov com relatórios HTML
+-   **Performance**: psutil para monitoring de memória
+-   **Mocking**: AsyncMock para testes assíncronos
+
+## �🔧 Configurações
 
 ### Ambientes Suportados:
 
@@ -145,14 +205,51 @@ graph TB
 -   `LOG_LEVEL`: Nível de logging
 -   `ENVIRONMENT`: Ambiente atual (dev/test/prod)
 
+## 🚨 Tratamento de Exceções
+
+### Exceções Customizadas (`app/core/exceptions.py`):
+
+-   **AcompanhamentoException**: Base para exceções de negócio
+-   **AcompanhamentoNotFound**: Pedido não encontrado
+-   **InvalidStatusTransition**: Transição de status inválida
+-   **ValidationError**: Erros de validação de dados
+
+### Context Manager:
+
+-   **handle_service_exceptions()**: Conversão automática para HTTP errors
+-   **Logging**: Rastreamento automático de exceções
+-   **User-Friendly**: Mensagens de erro padronizadas
+
 ## 🚀 Tecnologias Utilizadas
 
--   **FastAPI**: Framework web assíncrono
+### **Core Framework:**
+
+-   **FastAPI**: Framework web assíncrono com documentação automática
 -   **Pydantic**: Validação de dados e serialização
--   **SQLAlchemy**: ORM para banco de dados (preparado)
+-   **SQLAlchemy**: ORM para banco de dados (preparado para MySQL)
 -   **Alembic**: Migrações de banco
+
+### **Mensageria e Configuração:**
+
 -   **Kafka**: Mensageria assíncrona (preparado)
 -   **Poetry**: Gerenciamento de dependências
 -   **Docker**: Containerização
--   **Pytest**: Framework de testes
--   **GitHub Actions**: CI/CD
+
+### **Testes e Qualidade:**
+
+-   **Pytest**: Framework de testes (402 testes implementados)
+-   **pytest-cov**: Cobertura de código (91% atual)
+-   **psutil**: Monitoring de performance e memória
+-   **AsyncMock**: Testes assíncronos
+
+### **DevOps e CI/CD:**
+
+-   **GitHub Actions**: CI/CD pipeline
+-   **Pre-commit**: Hooks de qualidade
+-   **Custom Test Runner**: `run_tests.py` para execução organizada
+
+### **Desenvolvimento:**
+
+-   **VS Code**: Editor recomendado com configurações específicas
+-   **Black**: Formatação de código
+-   **isort**: Organização de imports

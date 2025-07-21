@@ -2,13 +2,16 @@ from datetime import datetime
 
 from fastapi import FastAPI
 
-from app.models.acompanhamento import Acompanhamento
+from app.api.v1 import api_router
 
 app = FastAPI(
     title="Microservice de Acompanhamento",
     description="API para acompanhamento de pedidos",
     version="1.0.0",
 )
+
+# Inclui o router principal da API v1 (mantém URLs limpas como /acompanhamento/*)
+app.include_router(api_router)
 
 
 @app.get("/")
@@ -25,20 +28,10 @@ def health_check():
     }
 
 
-@app.post("/acompanhamento", response_model=Acompanhamento)
-def criar_acompanhamento(acompanhamento: Acompanhamento):
-    """Criar um novo acompanhamento de pedido"""
-    return acompanhamento
+if __name__ == "__main__":
+    import uvicorn
 
-
-@app.get("/acompanhamento/{id_pedido}")
-def obter_acompanhamento(id_pedido: int):
-    """Obter acompanhamento de um pedido específico"""
-    return {
-        "id_pedido": id_pedido,
-        "status": "em_preparo",
-        "tempo_estimado": "20 minutos",
-    }
+    uvicorn.run(app, host="0.0.0.0", port=8000)
 
 
 if __name__ == "__main__":
