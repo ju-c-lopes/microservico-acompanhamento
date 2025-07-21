@@ -244,9 +244,10 @@ class TestAPIMemoryUsage:
         # Measure final memory
         final_memory = process.memory_info().rss
 
-        # Memory should not grow excessively (allow 50MB growth)
+        # Memory should not grow excessively. Default limit is 50MB, configurable via MEMORY_GROWTH_LIMIT_MB.
+        memory_growth_limit = int(os.getenv("MEMORY_GROWTH_LIMIT_MB", 50)) * 1024 * 1024
         memory_growth = final_memory - initial_memory
-        assert memory_growth < 50 * 1024 * 1024  # 50MB limit
+        assert memory_growth < memory_growth_limit, f"Memory growth exceeded limit: {memory_growth} bytes"
 
     def test_response_size_consistency(self):
         """Testa consistência do tamanho de resposta."""
