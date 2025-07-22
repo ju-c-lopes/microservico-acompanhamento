@@ -209,8 +209,8 @@ class AcompanhamentoRepository(AcompanhamentoRepositoryInterface):
         """Converte modelo de banco para modelo de domínio"""
         # Converte itens do banco para modelo de domínio
         itens = []
-        # Usa __dict__ para acessar itens sem disparar lazy loading
-        db_itens = db_acompanhamento.__dict__.get("itens", [])
+        # Acessa itens diretamente, já que selectinload garante o eager loading
+        db_itens = db_acompanhamento.itens
         for db_item in db_itens:
             item = ItemPedido(
                 id_produto=db_item.id_produto,
