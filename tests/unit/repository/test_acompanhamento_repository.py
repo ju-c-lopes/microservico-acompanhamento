@@ -160,7 +160,7 @@ class TestAcompanhamentoRepositoryReadOperations:
                     id_produto = 101
                     quantidade = 2
 
-                self.__dict__ = {"itens": [MockDbItem()]}
+                self.itens = [MockDbItem()]
 
         mock_db_acompanhamento = MockDbAcompanhamento()
 
