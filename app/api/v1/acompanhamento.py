@@ -16,14 +16,16 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.api.dependencies import get_acompanhamento_service
 from app.domain.acompanhamento_service import AcompanhamentoService
-from app.schemas.acompanhamento_schemas import (AcompanhamentoResponse,
-                                                AcompanhamentoResumoResponse,
-                                                AtualizarStatusRequest,
-                                                EventoPagamentoRequest,
-                                                EventoPedidoRequest,
-                                                FilaPedidosResponse,
-                                                HealthResponse,
-                                                SuccessResponse)
+from app.schemas.acompanhamento_schemas import (
+    AcompanhamentoResponse,
+    AcompanhamentoResumoResponse,
+    AtualizarStatusRequest,
+    EventoPagamentoRequest,
+    EventoPedidoRequest,
+    FilaPedidosResponse,
+    HealthResponse,
+    SuccessResponse,
+)
 
 # Router com prefixo /acompanhamento (sem /api/v1 conforme sugerido)
 router = APIRouter(prefix="/acompanhamento", tags=["acompanhamento"])
@@ -66,15 +68,18 @@ async def buscar_acompanhamento(
         400: ID do pedido inválido
     """
     try:
-        acompanhamento = await service.repository.buscar_por_id_pedido(id_pedido)
-        if not acompanhamento:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Acompanhamento não encontrado para pedido {id_pedido}",
-            )
+        acompanhamento = await service.buscar_por_id_pedido(id_pedido)
         return acompanhamento
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        if "não encontrado" in str(e):
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        else:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao buscar acompanhamento: {str(e)}",
+        )
 
 
 @router.put("/{id_pedido}/status", response_model=AcompanhamentoResponse)
@@ -222,8 +227,8 @@ async def processar_evento_pedido(
     """
     try:
         # Converte EventoPedidoRequest para EventoPedido (domain model)
-        from app.models.events import EventoPedido
-        from app.models.events import ItemPedido as ItemPedidoEvent
+        from app.models.acompanhamento import EventoPedido
+        from app.models.acompanhamento import ItemPedido as ItemPedidoEvent
 
         evento_domain = EventoPedido(
             id_pedido=evento.id_pedido,
@@ -285,16 +290,22 @@ async def processar_evento_pagamento(
     """
     try:
         # Converte EventoPagamentoRequest para EventoPagamento (domain model)
-        from app.models.events import EventoPagamento
+        from app.models.acompanhamento import EventoPagamento
 
         evento_domain = EventoPagamento(
             id_pagamento=evento.id_pagamento,
             id_pedido=evento.id_pedido,
-            status=evento.status,
+            status=evento.status,  # Já é StatusPagamento enum do schema
             criado_em=evento.criado_em,
         )
 
         acompanhamento = await service.processar_evento_pagamento(evento_domain)
+
+        if not acompanhamento:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Pedido {evento.id_pedido} não encontrado para processar pagamento",
+            )
 
         return SuccessResponse(
             message=f"Evento de pagamento para pedido {evento.id_pedido} processado com sucesso",

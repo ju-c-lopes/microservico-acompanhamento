@@ -60,8 +60,7 @@ def sample_item_pedido():
 @pytest.fixture
 def sample_acompanhamento(sample_item_pedido):
     """Acompanhamento de exemplo para mocks."""
-    from app.models.acompanhamento import (Acompanhamento, StatusPagamento,
-                                           StatusPedido)
+    from app.models.acompanhamento import Acompanhamento, StatusPagamento, StatusPedido
 
     return Acompanhamento(
         id_pedido=12345,
@@ -129,8 +128,7 @@ class TestEventoEndpoints:
 
                 # Converte dados para schema
                 from app.api.v1.acompanhamento import processar_evento_pedido
-                from app.schemas.acompanhamento_schemas import \
-                    EventoPedidoRequest
+                from app.schemas.acompanhamento_schemas import EventoPedidoRequest
 
                 evento_request = EventoPedidoRequest(**sample_evento_pedido_data)
 
@@ -181,8 +179,7 @@ class TestEventoEndpoints:
                 )
 
                 from app.api.v1.acompanhamento import processar_evento_pedido
-                from app.schemas.acompanhamento_schemas import \
-                    EventoPedidoRequest
+                from app.schemas.acompanhamento_schemas import EventoPedidoRequest
 
                 evento_request = EventoPedidoRequest(**sample_evento_pedido_data)
 
@@ -219,10 +216,8 @@ class TestEventoEndpoints:
                 )
 
                 # Converte dados para schema
-                from app.api.v1.acompanhamento import \
-                    processar_evento_pagamento
-                from app.schemas.acompanhamento_schemas import \
-                    EventoPagamentoRequest
+                from app.api.v1.acompanhamento import processar_evento_pagamento
+                from app.schemas.acompanhamento_schemas import EventoPagamentoRequest
 
                 evento_request = EventoPagamentoRequest(**sample_evento_pagamento_data)
 
@@ -251,10 +246,8 @@ class TestEventoEndpoints:
                     ValueError("Pedido não encontrado")
                 )
 
-                from app.api.v1.acompanhamento import \
-                    processar_evento_pagamento
-                from app.schemas.acompanhamento_schemas import \
-                    EventoPagamentoRequest
+                from app.api.v1.acompanhamento import processar_evento_pagamento
+                from app.schemas.acompanhamento_schemas import EventoPagamentoRequest
 
                 evento_request = EventoPagamentoRequest(**sample_evento_pagamento_data)
 
@@ -333,7 +326,7 @@ class TestExistingEndpointsFunctions:
                 # Configura mock do service
                 mock_service_instance = AsyncMock()
                 mock_service.return_value = mock_service_instance
-                mock_service_instance.repository.buscar_por_id_pedido.return_value = (
+                mock_service_instance.buscar_por_id_pedido.return_value = (
                     sample_acompanhamento
                 )
 
@@ -344,7 +337,7 @@ class TestExistingEndpointsFunctions:
 
                 # Validações - função retorna diretamente o acompanhamento
                 assert result == sample_acompanhamento
-                mock_service_instance.repository.buscar_por_id_pedido.assert_called_once_with(
+                mock_service_instance.buscar_por_id_pedido.assert_called_once_with(
                     12345
                 )
 
@@ -357,8 +350,9 @@ class TestExistingEndpointsFunctions:
             ) as mock_service:
                 mock_service_instance = AsyncMock()
                 mock_service.return_value = mock_service_instance
-                mock_service_instance.repository.buscar_por_id_pedido.return_value = (
-                    None
+                # Configura o mock para lançar ValueError (que é o que o service faz)
+                mock_service_instance.buscar_por_id_pedido.side_effect = ValueError(
+                    "Acompanhamento não encontrado para pedido 99999"
                 )
 
                 from app.api.v1.acompanhamento import buscar_acompanhamento
@@ -396,8 +390,7 @@ class TestExistingEndpointsFunctions:
                 result = await buscar_fila_pedidos(mock_service_instance)
 
                 # Validações - função retorna FilaPedidosResponse
-                from app.schemas.acompanhamento_schemas import \
-                    FilaPedidosResponse
+                from app.schemas.acompanhamento_schemas import FilaPedidosResponse
 
                 assert isinstance(result, FilaPedidosResponse)
                 assert result.total == 1

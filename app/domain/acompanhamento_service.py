@@ -1,10 +1,13 @@
 from datetime import datetime
 from typing import List, Optional
 
-from app.domain.order_state import (OrderStateManager, StatusPagamento,
-                                    StatusPedido, get_estimated_time_minutes)
-from app.models.acompanhamento import (Acompanhamento, EventoPagamento,
-                                       EventoPedido)
+from app.domain.order_state import (
+    OrderStateManager,
+    StatusPagamento,
+    StatusPedido,
+    get_estimated_time_minutes,
+)
+from app.models.acompanhamento import Acompanhamento, EventoPagamento, EventoPedido
 
 
 class AcompanhamentoService:
@@ -59,6 +62,15 @@ class AcompanhamentoService:
             acompanhamento.status = StatusPedido.EM_PREPARACAO
 
         return await self.repository.atualizar(acompanhamento)
+
+    async def buscar_por_id_pedido(self, id_pedido: int) -> Acompanhamento:
+        """
+        Busca acompanhamento por ID do pedido com validação
+        """
+        acompanhamento = await self.repository.buscar_por_id_pedido(id_pedido)
+        if not acompanhamento:
+            raise ValueError(f"Acompanhamento não encontrado para pedido {id_pedido}")
+        return acompanhamento
 
     async def atualizar_status_pedido(
         self, id_pedido: int, novo_status: StatusPedido
