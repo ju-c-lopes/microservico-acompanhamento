@@ -477,4 +477,3 @@ class TestErrorHandlingScenarios:
                             raise exception
 
                     assert exc_info.value.status_code == expected_status
-

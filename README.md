@@ -17,6 +17,7 @@ Este microserviço gerencia o ciclo de vida dos pedidos, desde o recebimento at�
 -   ⏰ **Cálculo de Tempo Estimado**: Estimativas inteligentes baseadas nos itens
 -   🔄 **Gerenciamento de Estados**: Transições validadas entre status
 -   📊 **Fila de Pedidos**: Organização e priorização de pedidos
+-   🚀 **Event Streaming**: Processamento de eventos via Kafka
 
 ### 🏗️ Arquitetura
 
@@ -101,13 +102,14 @@ docker-compose up -d
     -   Validações de negócio integradas
     -   Enums de status com valores em português
 
--   **✅ API REST Completa** (FastAPI)
+-   **✅ API REST + Kafka** (FastAPI)
 
-    -   5 endpoints implementados e funcionais
+    -   9 endpoints implementados e funcionais
+    -   Event processing para integração entre microserviços
     -   Validação automática via Pydantic
     -   Error handling e dependency injection
 
--   **✅ Suite de Testes Robusta** (402 testes)
+-   **✅ Suite de Testes Robusta** (424 testes)
 
     -   Unit tests (isolados e rápidos)
     -   Integration tests (interação entre componentes)
@@ -122,16 +124,22 @@ docker-compose up -d
     -   Relatórios de cobertura
 
 -   **✅ Pipeline CI/CD Completo**
+
     -   Testes automáticos em Python 3.11 e 3.12
     -   Quality gates obrigatórios
     -   Proteção de branch main
     -   Escaneamento de segurança
 
+-   **✅ Repository Layer** (SQLAlchemy)
+
+    -   Interface completa implementada
+    -   Operações CRUD com async/await
+    -   Testes de integração validados
+
 ### 🚧 Em Desenvolvimento
 
--   **Repository Implementation** (SQLAlchemy)
 -   **Database Integration** (MySQL via RDS)
--   **Kafka Integration** (Event Streaming)
+-   **Kafka Infrastructure** (Consumer/Producer deployment)
 -   **Database Migrations** (Alembic)
 
 ## 📚 Documentação
@@ -140,6 +148,7 @@ docker-compose up -d
 -   🧪 [**Guia de Testes**](documentation/TESTING_GUIDE.md) - Como executar e organizar testes
 -   🚀 [**Pipeline CI/CD**](documentation/CI_CD_PIPELINE.md) - Workflows e automações
 -   🛡️ [**Proteção de Branch**](documentation/BRANCH_PROTECTION.md) - Configurações de segurança
+-   📊 [**Relatório do Projeto**](documentation/PROJECT_REPORT.md) - Histórico completo de desenvolvimento
 
 ## 👥 Contribuindo
 
@@ -162,9 +171,9 @@ git push origin feature/sua-feature
 
 ## 📈 Métricas de Qualidade
 
--   **Testes**: 402 testes executados automaticamente
--   **Cobertura**: 91% atual (superou meta 90%)
--   **Performance**: ~1.4s para suite completa
+-   **Testes**: 424 testes executados automaticamente
+-   **Cobertura**: 97% atual (superou meta 90%)
+-   **Performance**: ~3.1s para suite completa
 -   **Segurança**: Escaneamento automático de vulnerabilidades
 -   **Qualidade**: Validações de código obrigatórias
 

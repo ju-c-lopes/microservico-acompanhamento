@@ -6,7 +6,6 @@ Provides easy commands to run different categories of tests.
 
 import subprocess
 import sys
-from pathlib import Path
 
 
 def run_command(cmd, description):
@@ -15,12 +14,7 @@ def run_command(cmd, description):
     print(f"Command: {' '.join(cmd)}")
     print("-" * 50)
 
-    import os
-
-    env = os.environ.copy()
-    env["PYTHONPATH"] = "."
-
-    result = subprocess.run(cmd, cwd=Path(__file__).parent, env=env)
+    result = subprocess.run(cmd)
     return result.returncode
 
 
@@ -47,13 +41,13 @@ Available commands:
   service         - Run service layer tests only
   api             - Run API layer tests only (schemas, dependencies, config)
   schemas         - Run schema validation tests only
-  
+
   # Specific model tests:
   item            - Run ItemPedido tests
   evento-pedido   - Run EventoPedido tests
   evento-pagamento - Run EventoPagamento tests
   acompanhamento  - Run Acompanhamento tests
-  
+
 Examples:
   python run_tests.py all
   python run_tests.py unit
@@ -143,22 +137,7 @@ Examples:
         return 0
 
     elif command == "coverage":
-        # Check if pytest-cov is installed by trying to run pytest with --cov
-        try:
-            result = subprocess.run(
-                ["poetry", "run", "python", "-m", "pytest", "--help"],
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-            if "--cov" not in result.stdout:
-                raise RuntimeError("The 'pytest-cov' plugin is not installed.")
-        except (RuntimeError, FileNotFoundError):
-            print(
-                "❌ The 'pytest-cov' plugin is not installed. Please install it by running:"
-            )
-            print("   poetry add --dev pytest-cov")
-            return 1
+        # Run tests with coverage
         cmd = (
             cmd_base
             + ["tests/", "--cov=app/models", "--cov-report=html", "--cov-report=term"]

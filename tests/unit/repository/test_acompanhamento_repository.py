@@ -12,7 +12,7 @@ Por que começar com testes?
 """
 
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 
@@ -83,6 +83,11 @@ class TestAcompanhamentoRepositoryCreateOperations:
         mock_session = AsyncMock()
         repository = AcompanhamentoRepository(mock_session)
 
+        # Mock para a consulta com eager loading
+        mock_result = AsyncMock()
+        mock_result.scalar_one.return_value = sample_acompanhamento
+        mock_session.execute.return_value = mock_result
+
         # Criamos uma cópia do acompanhamento para simular o resultado com ID
         expected_result = sample_acompanhamento
 
@@ -98,7 +103,7 @@ class TestAcompanhamentoRepositoryCreateOperations:
         assert result == expected_result
         mock_session.add.assert_called_once()
         mock_session.commit.assert_called_once()
-        mock_session.refresh.assert_called_once()
+        mock_session.execute.assert_called_once()  # Para consulta com eager loading
 
     @pytest.mark.anyio
     async def test_criar_acompanhamento_duplicate_id_pedido(
@@ -131,7 +136,7 @@ class TestAcompanhamentoRepositoryReadOperations:
     """
 
     @pytest.mark.anyio
-    async def test_buscar_por_id_found(self, sample_acompanhamento):
+    async def test_buscar_por_id_found(self):
         """
         Testa busca por ID quando registro existe.
         """
@@ -139,16 +144,37 @@ class TestAcompanhamentoRepositoryReadOperations:
         mock_session = AsyncMock()
         repository = AcompanhamentoRepository(mock_session)
 
-        # Act
-        with patch.object(repository, "_from_db_model") as mock_from_db:
-            mock_from_db.return_value = sample_acompanhamento
-            mock_session.get.return_value = sample_acompanhamento
+        # Mock do objeto de banco de dados com atributos simples
+        class MockDbAcompanhamento:
+            id_pedido = 12345
+            cpf_cliente = "12345678901"
+            status = "Recebido"
+            status_pagamento = "pendente"
+            tempo_estimado = "25 min"
+            atualizado_em = datetime.now()
+            valor_pago = None
 
-            result = await repository.buscar_por_id(1)
+            def __init__(self):
+                # Mock de itens do banco
+                class MockDbItem:
+                    id_produto = 101
+                    quantidade = 2
+
+                self.itens = [MockDbItem()]
+
+        mock_db_acompanhamento = MockDbAcompanhamento()
+
+        # Mock para o execute() do SQLAlchemy
+        mock_result = Mock()
+        mock_result.scalar_one_or_none.return_value = mock_db_acompanhamento
+        mock_session.execute.return_value = mock_result
+
+        result = await repository.buscar_por_id(1)
 
         # Assert
-        assert result == sample_acompanhamento
-        mock_session.get.assert_called_once()
+        assert result is not None
+        assert result.id_pedido == 12345
+        mock_session.execute.assert_called_once()
 
     @pytest.mark.anyio
     async def test_buscar_por_id_not_found(self):
@@ -158,14 +184,18 @@ class TestAcompanhamentoRepositoryReadOperations:
         # Arrange
         mock_session = AsyncMock()
         repository = AcompanhamentoRepository(mock_session)
-        mock_session.get.return_value = None
+
+        # Mock para o execute() do SQLAlchemy retornando None
+        mock_result = Mock()
+        mock_result.scalar_one_or_none.return_value = None
+        mock_session.execute.return_value = mock_result
 
         # Act
         result = await repository.buscar_por_id(999)
 
         # Assert
         assert result is None
-        mock_session.get.assert_called_once_with(AcompanhamentoModel, 999)
+        mock_session.execute.assert_called_once()
 
     @pytest.mark.anyio
     async def test_buscar_por_id_pedido_found(self, sample_acompanhamento):

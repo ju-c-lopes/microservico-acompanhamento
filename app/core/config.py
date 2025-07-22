@@ -6,7 +6,6 @@ da API de acompanhamento, incluindo configurações de ambiente, logging e integ
 
 import os
 from functools import lru_cache
-from typing import List, Optional
 
 
 class Settings:
