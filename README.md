@@ -44,20 +44,33 @@ Este microserviço gerencia o ciclo de vida dos pedidos, desde o recebimento at�
 -   Poetry
 -   Docker (opcional)
 
-### ⚡ Instalação Rápida
+### ⚡ Instalação
 
 ```bash
-# 1. Clonar o repositório
+# 1. Instalação do poetry
+# Linux, MacOS, Windows (WSL)
+curl -sSL https://install.python-poetry.org | python3 -
+
+# Adicionar ao PATH (escolha seu shell):
+# Para Bash:
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc && source ~/.bashrc
+# Para Zsh (macOS padrão):
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc && source ~/.zshrc
+
+# Verificar instalação:
+poetry --version
+
+# 2. Clonar o repositório
 git clone https://github.com/ju-c-lopes/microservico-acompanhamento.git
 cd microservico-acompanhamento
 
-# 2. Instalar dependências
+# 3. Instalar dependências
 poetry install
 
-# 3. Executar testes
+# 4. Executar testes
 python run_tests.py all
 
-# 4. Executar a aplicação (quando disponível)
+# 5. Executar a aplicação (quando disponível)
 poetry run uvicorn app.main:app --reload
 ```
 
