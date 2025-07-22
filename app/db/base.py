@@ -32,7 +32,7 @@ class ItemPedido(Base):
 
     id_produto = Column(Integer, primary_key=True)
     id_pedido = Column(Integer, ForeignKey("acompanhamento.id_pedido"), nullable=False)
-    nome_produto = Column(String(100), nullable=False)
+    nome_produto = Column(String(100), nullable=True)
     descricao_produto = Column(String(255), nullable=True)
     quantidade = Column(Integer, nullable=False)
     personalizacao = Column(String(255), nullable=True)

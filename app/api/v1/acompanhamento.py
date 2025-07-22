@@ -19,8 +19,11 @@ from app.domain.acompanhamento_service import AcompanhamentoService
 from app.schemas.acompanhamento_schemas import (AcompanhamentoResponse,
                                                 AcompanhamentoResumoResponse,
                                                 AtualizarStatusRequest,
+                                                EventoPagamentoRequest,
+                                                EventoPedidoRequest,
                                                 FilaPedidosResponse,
-                                                HealthResponse)
+                                                HealthResponse,
+                                                SuccessResponse)
 
 # Router com prefixo /acompanhamento (sem /api/v1 conforme sugerido)
 router = APIRouter(prefix="/acompanhamento", tags=["acompanhamento"])
@@ -192,4 +195,123 @@ async def buscar_pedidos_cliente(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erro ao buscar pedidos do cliente: {str(e)}",
+        )
+
+
+@router.post("/evento-pedido", response_model=SuccessResponse)
+async def processar_evento_pedido(
+    evento: EventoPedidoRequest,
+    service: AcompanhamentoService = Depends(get_acompanhamento_service),
+):
+    """
+    Processa evento de pedido recebido via Kafka.
+
+    Este endpoint é chamado quando um novo pedido é criado no microserviço
+    de pedidos e precisa ser registrado para acompanhamento.
+
+    Args:
+        evento: Dados do evento de pedido
+
+    Returns:
+        SuccessResponse: Confirmação do processamento
+
+    Raises:
+        400: Dados do evento inválidos
+        409: Pedido já existe
+        500: Erro interno do servidor
+    """
+    try:
+        # Converte EventoPedidoRequest para EventoPedido (domain model)
+        from app.models.events import EventoPedido
+        from app.models.events import ItemPedido as ItemPedidoEvent
+
+        evento_domain = EventoPedido(
+            id_pedido=evento.id_pedido,
+            cpf_cliente=evento.cpf_cliente,
+            itens=[
+                ItemPedidoEvent(id_produto=item.id_produto, quantidade=item.quantidade)
+                for item in evento.itens
+            ],
+            total_pedido=evento.total_pedido,
+            tempo_estimado=evento.tempo_estimado,
+            status=evento.status,
+            criado_em=evento.criado_em,
+        )
+
+        acompanhamento = await service.processar_evento_pedido(evento_domain)
+
+        return SuccessResponse(
+            message=f"Evento de pedido {evento.id_pedido} processado com sucesso",
+            data={
+                "id_pedido": acompanhamento.id_pedido,
+                "status": acompanhamento.status.value,
+                "criado_em": acompanhamento.atualizado_em.isoformat(),
+            },
+        )
+
+    except ValueError as e:
+        if "já existe" in str(e).lower():
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+        else:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao processar evento de pedido: {str(e)}",
+        )
+
+
+@router.post("/evento-pagamento", response_model=SuccessResponse)
+async def processar_evento_pagamento(
+    evento: EventoPagamentoRequest,
+    service: AcompanhamentoService = Depends(get_acompanhamento_service),
+):
+    """
+    Processa evento de pagamento recebido via Kafka.
+
+    Este endpoint é chamado quando há mudanças no status de pagamento
+    de um pedido e precisa atualizar o acompanhamento.
+
+    Args:
+        evento: Dados do evento de pagamento
+
+    Returns:
+        SuccessResponse: Confirmação do processamento
+
+    Raises:
+        400: Dados do evento inválidos
+        404: Pedido não encontrado
+        500: Erro interno do servidor
+    """
+    try:
+        # Converte EventoPagamentoRequest para EventoPagamento (domain model)
+        from app.models.events import EventoPagamento
+
+        evento_domain = EventoPagamento(
+            id_pagamento=evento.id_pagamento,
+            id_pedido=evento.id_pedido,
+            status=evento.status,
+            criado_em=evento.criado_em,
+        )
+
+        acompanhamento = await service.processar_evento_pagamento(evento_domain)
+
+        return SuccessResponse(
+            message=f"Evento de pagamento para pedido {evento.id_pedido} processado com sucesso",
+            data={
+                "id_pedido": acompanhamento.id_pedido,
+                "status_pagamento": acompanhamento.status_pagamento.value,
+                "atualizado_em": acompanhamento.atualizado_em.isoformat(),
+            },
+        )
+
+    except ValueError as e:
+        if "não encontrado" in str(e).lower():
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        else:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao processar evento de pagamento: {str(e)}",
         )

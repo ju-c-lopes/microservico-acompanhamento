@@ -4,15 +4,16 @@ from typing import List, Optional
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.db.base import Acompanhamento as AcompanhamentoModel
 from app.db.base import ItemPedido as ItemPedidoModel
 from app.domain.order_state import StatusPagamento, StatusPedido
-from app.models.acompanhamento import Acompanhamento
+from app.models.acompanhamento import Acompanhamento, ItemPedido
 
 
 class AcompanhamentoRepositoryInterface(ABC):
-    """Interface do repositório de acompanhamento"""
+    """Interface para repositório de acompanhamento"""
 
     @abstractmethod
     async def criar(self, acompanhamento: Acompanhamento) -> Acompanhamento:
@@ -61,10 +62,19 @@ class AcompanhamentoRepository(AcompanhamentoRepositoryInterface):
 
             self.session.add(db_acompanhamento)
             await self.session.commit()
-            await self.session.refresh(db_acompanhamento)
+
+            # Busca o registro criado com eager loading dos itens
+            stmt = (
+                select(AcompanhamentoModel)
+                .options(selectinload(AcompanhamentoModel.itens))
+                .where(AcompanhamentoModel.id_pedido == acompanhamento.id_pedido)
+            )
+
+            result = await self.session.execute(stmt)
+            db_acompanhamento_with_itens = result.scalar_one()
 
             # Converte de volta para modelo de domínio
-            return self._from_db_model(db_acompanhamento)
+            return self._from_db_model(db_acompanhamento_with_itens)
 
         except IntegrityError:
             await self.session.rollback()
@@ -74,14 +84,24 @@ class AcompanhamentoRepository(AcompanhamentoRepositoryInterface):
 
     async def buscar_por_id(self, id: int) -> Optional[Acompanhamento]:
         """Busca acompanhamento por ID"""
-        db_acompanhamento = await self.session.get(AcompanhamentoModel, id)
+        stmt = (
+            select(AcompanhamentoModel)
+            .options(selectinload(AcompanhamentoModel.itens))
+            .where(AcompanhamentoModel.id_acompanhamento == id)
+        )
+
+        result = await self.session.execute(stmt)
+        db_acompanhamento = result.scalar_one_or_none()
         return self._from_db_model(db_acompanhamento) if db_acompanhamento else None
 
     async def buscar_por_id_pedido(self, id_pedido: int) -> Optional[Acompanhamento]:
         """Busca acompanhamento por ID do pedido"""
-        stmt = select(AcompanhamentoModel).where(
-            AcompanhamentoModel.id_pedido == id_pedido
+        stmt = (
+            select(AcompanhamentoModel)
+            .options(selectinload(AcompanhamentoModel.itens))
+            .where(AcompanhamentoModel.id_pedido == id_pedido)
         )
+
         result = await self.session.execute(stmt)
         db_acompanhamento = result.scalar_one_or_none()
         return self._from_db_model(db_acompanhamento) if db_acompanhamento else None
@@ -90,6 +110,7 @@ class AcompanhamentoRepository(AcompanhamentoRepositoryInterface):
         """Busca acompanhamentos por CPF do cliente"""
         stmt = (
             select(AcompanhamentoModel)
+            .options(selectinload(AcompanhamentoModel.itens))
             .where(AcompanhamentoModel.cpf_cliente == cpf_cliente)
             .order_by(AcompanhamentoModel.atualizado_em.desc())
         )
@@ -104,6 +125,7 @@ class AcompanhamentoRepository(AcompanhamentoRepositoryInterface):
         status_strings = [status.value for status in status_list]
         stmt = (
             select(AcompanhamentoModel)
+            .options(selectinload(AcompanhamentoModel.itens))
             .where(AcompanhamentoModel.status.in_(status_strings))
             .order_by(AcompanhamentoModel.atualizado_em.asc())
         )
@@ -130,10 +152,20 @@ class AcompanhamentoRepository(AcompanhamentoRepositoryInterface):
         # Preserva o ID existente do banco
         novo_db_acompanhamento.id_acompanhamento = db_acompanhamento.id_acompanhamento
 
-        merged = await self.session.merge(novo_db_acompanhamento)
+        await self.session.merge(novo_db_acompanhamento)
         await self.session.commit()
 
-        return self._from_db_model(merged)
+        # Busca o registro atualizado com eager loading dos itens
+        stmt = (
+            select(AcompanhamentoModel)
+            .options(selectinload(AcompanhamentoModel.itens))
+            .where(AcompanhamentoModel.id_pedido == acompanhamento.id_pedido)
+        )
+
+        result = await self.session.execute(stmt)
+        db_acompanhamento_with_itens = result.scalar_one()
+
+        return self._from_db_model(db_acompanhamento_with_itens)
 
     async def listar_todos(
         self, skip: int = 0, limit: int = 100
@@ -141,6 +173,7 @@ class AcompanhamentoRepository(AcompanhamentoRepositoryInterface):
         """Lista todos os acompanhamentos com paginação"""
         stmt = (
             select(AcompanhamentoModel)
+            .options(selectinload(AcompanhamentoModel.itens))
             .order_by(AcompanhamentoModel.atualizado_em.desc())
             .offset(skip)
             .limit(limit)
@@ -165,14 +198,7 @@ class AcompanhamentoRepository(AcompanhamentoRepositoryInterface):
         for item in acompanhamento.itens:
             db_item = ItemPedidoModel(
                 id_produto=item.id_produto,
-                id_pedido=acompanhamento.id_pedido,  # FK baseada no id_pedido
-                nome_produto=getattr(
-                    item, "nome_produto", f"Produto {item.id_produto}"
-                ),
-                descricao_produto=getattr(item, "descricao_produto", None),
                 quantidade=item.quantidade,
-                personalizacao=getattr(item, "personalizacao", None),
-                categoria=getattr(item, "categoria", None),
             )
             db_itens.append(db_item)
 
@@ -180,12 +206,12 @@ class AcompanhamentoRepository(AcompanhamentoRepositoryInterface):
         return db_acompanhamento
 
     def _from_db_model(self, db_acompanhamento: AcompanhamentoModel) -> Acompanhamento:
-        """Converte modelo do banco para modelo de domínio"""
-        from app.models.acompanhamento import ItemPedido
-
+        """Converte modelo de banco para modelo de domínio"""
         # Converte itens do banco para modelo de domínio
         itens = []
-        for db_item in db_acompanhamento.itens:
+        # Usa __dict__ para acessar itens sem disparar lazy loading
+        db_itens = db_acompanhamento.__dict__.get("itens", [])
+        for db_item in db_itens:
             item = ItemPedido(
                 id_produto=db_item.id_produto,
                 quantidade=db_item.quantidade,
@@ -193,13 +219,13 @@ class AcompanhamentoRepository(AcompanhamentoRepositoryInterface):
             itens.append(item)
 
         return Acompanhamento(
-            id_pedido=getattr(db_acompanhamento, "id_pedido"),
-            cpf_cliente=getattr(db_acompanhamento, "cpf_cliente"),
+            id_pedido=db_acompanhamento.id_pedido,
+            cpf_cliente=db_acompanhamento.cpf_cliente,
             status=StatusPedido(db_acompanhamento.status),  # Converte string para enum
             status_pagamento=StatusPagamento(
                 db_acompanhamento.status_pagamento
             ),  # Converte string para enum
+            tempo_estimado=db_acompanhamento.tempo_estimado,
             itens=itens,
-            tempo_estimado=getattr(db_acompanhamento, "tempo_estimado"),
-            atualizado_em=getattr(db_acompanhamento, "atualizado_em"),
+            atualizado_em=db_acompanhamento.atualizado_em,
         )

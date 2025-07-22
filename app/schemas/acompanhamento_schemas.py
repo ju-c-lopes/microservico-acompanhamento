@@ -13,6 +13,36 @@ from app.domain.order_state import StatusPagamento, StatusPedido
 # === REQUEST SCHEMAS ===
 
 
+class ItemPedidoRequest(BaseModel):
+    """Schema para item do pedido em requests"""
+
+    id_produto: int = Field(..., gt=0, description="ID do produto")
+    quantidade: int = Field(..., gt=0, description="Quantidade do item")
+
+
+class EventoPedidoRequest(BaseModel):
+    """Schema para processamento de eventos de pedido via Kafka"""
+
+    id_pedido: int = Field(..., gt=0, description="ID único do pedido")
+    cpf_cliente: str = Field(..., description="CPF do cliente")
+    itens: List[ItemPedidoRequest] = Field(
+        ..., min_items=1, description="Lista de itens do pedido"
+    )
+    total_pedido: float = Field(..., ge=0, description="Valor total do pedido")
+    tempo_estimado: Optional[str] = Field(None, description="Tempo estimado de preparo")
+    status: str = Field(..., description="Status inicial do pedido")
+    criado_em: datetime = Field(..., description="Data/hora de criação do pedido")
+
+
+class EventoPagamentoRequest(BaseModel):
+    """Schema para processamento de eventos de pagamento via Kafka"""
+
+    id_pagamento: int = Field(..., gt=0, description="ID único do pagamento")
+    id_pedido: int = Field(..., gt=0, description="ID do pedido relacionado")
+    status: str = Field(..., description="Status do pagamento (pago/pendente/falhou)")
+    criado_em: datetime = Field(..., description="Data/hora do evento de pagamento")
+
+
 class AtualizarStatusRequest(BaseModel):
     """Schema para atualização de status do pedido pela cozinha"""
 

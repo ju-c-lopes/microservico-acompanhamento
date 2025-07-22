@@ -60,11 +60,17 @@ acompanhamento/
 -   **Tecnologia**: Python puro
 -   **Componentes**: Services, Business Rules, State Management
 
-### 3. **Repository Layer** (`app/repository/`)
+### 3. **Repository Layer** (`app/repository/`) ✅ IMPLEMENTADO
 
 -   **Responsabilidade**: Acesso a dados, persistência
--   **Tecnologia**: SQLAlchemy (preparado)
+-   **Tecnologia**: SQLAlchemy 2.0 com async/await ✅ NOVO
 -   **Componentes**: Repository Pattern, Data Access Objects
+-   **Implementação**:
+    -   CRUD completo (Create, Read, Update, Delete)
+    -   Eager loading com selectinload para evitar lazy loading
+    -   Async sessions para performance
+    -   Conversão automática entre modelos de banco e domínio
+    -   Tratamento de constraints e integridade referencial
 
 ### 4. **Models Layer** (`app/models/`)
 
@@ -92,7 +98,24 @@ graph TB
     D --> G[Response Schema]
     G --> H[FastAPI Response]
     H --> I[API Response]
+
+    %% Fluxo de Eventos Kafka ✅ NOVO
+    J[Kafka Event - Pedido] --> K[POST /evento-pedido]
+    K --> D
+    L[Kafka Event - Pagamento] --> M[POST /evento-pagamento]
+    M --> D
+
+    %% Integração entre Microserviços ✅ NOVO
+    N[Microserviço Pedidos] --> J
+    O[Microserviço Pagamentos] --> L
 ```
+
+### Processamento de Eventos ✅ NOVO
+
+1. **Eventos de Pedido**: Microserviço de pedidos publica eventos que são processados via `/acompanhamento/evento-pedido`
+2. **Eventos de Pagamento**: Microserviço de pagamentos publica eventos que são processados via `/acompanhamento/evento-pagamento`
+3. **Consolidação**: Estados de pedido e pagamento são consolidados no acompanhamento
+4. **Notificações**: Sistema pode notificar clientes sobre mudanças de status
 
 ## 📋 Modelos de Dados
 
@@ -141,10 +164,15 @@ graph TB
     - `GET /health` - Health check detalhado com timestamp
 
 2. **Acompanhamento de Pedidos**
+
     - `GET /acompanhamento/{id_pedido}` - Buscar pedido por ID
     - `PUT /acompanhamento/{id_pedido}/status` - Atualizar status do pedido
     - `GET /acompanhamento/fila/pedidos` - Listar fila de pedidos
     - `GET /acompanhamento/cliente/{cpf}` - Histórico do cliente
+
+3. **Processamento de Eventos (Kafka Integration)** ✅ NOVO
+    - `POST /acompanhamento/evento-pedido` - Processar eventos de criação/atualização de pedidos via Kafka
+    - `POST /acompanhamento/evento-pagamento` - Processar eventos de pagamento via Kafka
 
 ### Padrões de Response:
 
@@ -155,24 +183,26 @@ graph TB
 
 ## 🧪 Estratégia de Testes
 
-### **Cobertura Total: 402 testes | 91% coverage**
+### **Cobertura Total: 424 testes | 97% coverage** ✅ ATUALIZADO
 
 ### 1. **Testes Unitários** (`tests/unit/`)
 
--   **295 testes** distribuídos por camada
+-   **336 testes** distribuídos por camada ✅ ATUALIZADO
 -   **API Layer**: 152 testes (endpoints, schemas, dependencies)
 -   **Models Layer**: 66 testes (validação, serialização)
+-   **Repository Layer**: 41 testes (CRUD operations, mocking) ✅ NOVO
 -   **Service Layer**: 77 testes (business logic, calculations, error handling)
 
 ### 2. **Testes de Integração** (`tests/integration/`)
 
--   **26 testes** de integração entre componentes
--   **API Integration**: Workflows completos end-to-end
+-   **46 testes** de integração entre componentes ✅ ATUALIZADO
+-   **Database Integration**: 8 testes de integração com SQLAlchemy ✅ NOVO
+-   **API Integration**: 14 testes funcionais de endpoints ✅ NOVO
 -   **Model Consistency**: Validação entre diferentes models
 
 ### 3. **Testes de Performance** (`tests/performance/`)
 
--   **46 testes** de performance e throughput
+-   **39 testes** de performance e throughput ✅ ATUALIZADO
 -   **Memory Monitoring**: Usando psutil para controle de memória
 -   **Concurrent Testing**: Simulação de carga e stress
 -   **Response Time**: Benchmarks de latência
@@ -186,9 +216,11 @@ graph TB
 ### Ferramentas de Teste:
 
 -   **Test Runner**: `python run_tests.py` (customizado)
--   **Coverage**: pytest-cov com relatórios HTML
+-   **Coverage**: pytest-cov com relatórios HTML (97% atual) ✅ ATUALIZADO
 -   **Performance**: psutil para monitoring de memória
 -   **Mocking**: AsyncMock para testes assíncronos
+-   **Database Testing**: SQLite in-memory para testes de integração ✅ NOVO
+-   **Functional Testing**: Abordagem funcional para endpoints API ✅ NOVO
 
 ## �🔧 Configurações
 
@@ -226,7 +258,7 @@ graph TB
 
 -   **FastAPI**: Framework web assíncrono com documentação automática
 -   **Pydantic**: Validação de dados e serialização
--   **SQLAlchemy**: ORM para banco de dados (preparado para MySQL)
+-   **SQLAlchemy**: ORM async implementado para MySQL/SQLite ✅ IMPLEMENTADO
 -   **Alembic**: Migrações de banco
 
 ### **Mensageria e Configuração:**
@@ -237,10 +269,11 @@ graph TB
 
 ### **Testes e Qualidade:**
 
--   **Pytest**: Framework de testes (402 testes implementados)
--   **pytest-cov**: Cobertura de código (91% atual)
+-   **Pytest**: Framework de testes (424 testes implementados) ✅ ATUALIZADO
+-   **pytest-cov**: Cobertura de código (97% atual) ✅ ATUALIZADO
 -   **psutil**: Monitoring de performance e memória
 -   **AsyncMock**: Testes assíncronos
+-   **SQLite**: Database in-memory para testes de integração ✅ NOVO
 
 ### **DevOps e CI/CD:**
 

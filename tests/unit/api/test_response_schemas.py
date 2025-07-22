@@ -10,15 +10,13 @@ import pytest
 from pydantic import ValidationError
 
 from app.domain.order_state import StatusPagamento, StatusPedido
-from app.schemas.acompanhamento_schemas import (
-    AcompanhamentoResponse,
-    AcompanhamentoResumoResponse,
-    ErrorResponse,
-    FilaPedidosResponse,
-    HealthResponse,
-    ItemPedidoResponse,
-    SuccessResponse,
-)
+from app.schemas.acompanhamento_schemas import (AcompanhamentoResponse,
+                                                AcompanhamentoResumoResponse,
+                                                ErrorResponse,
+                                                FilaPedidosResponse,
+                                                HealthResponse,
+                                                ItemPedidoResponse,
+                                                SuccessResponse)
 
 
 class TestItemPedidoResponse:
