@@ -20,6 +20,11 @@ tests/performance/          # Benchmarks de performance dos models
 
 # End-to-End Tests (fluxo completo)
 tests/e2e/                  # Cenários completos de negócio
+
+# BDD Tests (comportamento em linguagem natural) ✅ NOVO
+tests/bdd/                  # Cenários BDD com Gherkin (pytest-bdd)
+tests/bdd/features/         # Arquivos .feature com cenários em linguagem natural
+tests/bdd/test_acompanhamento_steps.py # Step definitions para pytest-bdd
 ```
 
 ## 🔧 Executando Testes Localmente
@@ -32,6 +37,7 @@ python run_tests.py unit           # Apenas unit tests
 python run_tests.py integration    # Apenas integration tests
 python run_tests.py performance    # Apenas performance tests
 python run_tests.py e2e            # Apenas end-to-end tests
+python run_tests.py bdd            # Apenas BDD tests (Behavior Driven Development) ✅ NOVO
 
 # Testes por camada
 python run_tests.py models         # Testes de models
@@ -64,6 +70,7 @@ poetry run pytest tests/unit/                    # Unit tests
 poetry run pytest tests/integration/             # Integration tests
 poetry run pytest tests/performance/             # Performance tests
 poetry run pytest tests/e2e/                     # End-to-end tests
+poetry run pytest tests/bdd/                     # BDD tests ✅ NOVO
 
 # Com cobertura
 poetry run pytest tests/ --cov=app/models        # Cobertura de models
@@ -124,17 +131,32 @@ xdg-open htmlcov/index.html  # Linux
 -   **Cobertura**: Complete order lifecycle, Business workflows
 -   **Total**: 3 testes covering full order workflows
 
+### BDD Tests ✅ NOVO
+
+-   **Objetivo**: Documentar comportamento em linguagem natural (Gherkin)
+-   **Características**: Cenários legíveis por stakeholders, colaboração
+-   **Cobertura**: Comportamentos de negócio em linguagem natural
+-   **Total**: 4 cenários BDD com 44 step definitions
+-   **Cenários implementados**:
+    1. **Cliente acompanha pedido do início ao fim** - Fluxo completo de status
+    2. **Consulta de fila de pedidos pela cozinha** - Ordenação e informações
+    3. **Cálculo de tempo estimado** - Baseado em categorias de itens
+    4. **Validação de transição de status** - Regras de negócio e transições inválidas
+-   **Framework**: pytest-bdd para execução de cenários Gherkin
+-   **Benefícios**: Documentação viva, colaboração negócio-desenvolvimento
+
 ## 🚀 Métricas de Qualidade
 
--   **Total de Testes**: 424 testes ✅ ATUALIZADO
--   **Cobertura**: 97% atual (90%+ mantida) ✅ ATUALIZADO
+-   **Total de Testes**: 428 testes ✅ ATUALIZADO
+-   **Cobertura**: 91% atual (90%+ mantida) ✅ ATUALIZADO
 -   **Performance**: ~1.4s para suite completa
--   **Categorias**: 4 tipos organizados (unit, integration, performance, e2e)
+-   **Categorias**: 5 tipos organizados (unit, integration, performance, e2e, bdd) ✅ ATUALIZADO
 -   **Distribuição**:
     -   **336 Unit Tests**: API (152), Models (66), Repository (41), Service (77) ✅ ATUALIZADO
     -   **46 Integration Tests**: Database (8), API endpoints (14), Model consistency ✅ ATUALIZADO
     -   **39 Performance Tests**: Memory monitoring, Throughput, Concurrency ✅ ATUALIZADO
     -   **3 E2E Tests**: Complete business workflows
+    -   **4 BDD Tests**: Cenários em linguagem natural (Gherkin) ✅ NOVO
 
 ## 📋 Comandos Úteis
 
@@ -159,8 +181,9 @@ poetry run pytest tests/ --lf
 
 ### **Principais Ferramentas:**
 
--   **pytest**: Framework de testes principal (424 testes) ✅ ATUALIZADO
--   **pytest-cov**: Cobertura de código (97% atual) ✅ ATUALIZADO
+-   **pytest**: Framework de testes principal (428 testes) ✅ ATUALIZADO
+-   **pytest-cov**: Cobertura de código (91% atual) ✅ ATUALIZADO
+-   **pytest-bdd**: Framework BDD para cenários Gherkin ✅ NOVO
 -   **psutil**: Monitoring de memória em performance tests
 -   **AsyncMock**: Testes assíncronos para services e repositories
 -   **SQLite**: Database in-memory para testes de integração ✅ NOVO
@@ -180,4 +203,95 @@ poetry run pytest tests/ --lf
 
 -   `conftest.py`: Fixtures compartilhadas por nível
 -   `pytest.ini`: Configurações globais do pytest
--   `run_tests.py`: Test runner customizado com 11 comandos
+-   `run_tests.py`: Test runner customizado com 12 comandos ✅ ATUALIZADO
+
+## 📊 Análise de Qualidade com SonarCloud ✅ NOVO
+
+### **Integração Automática:**
+
+-   **SonarCloud**: Análise contínua de qualidade, segurança e cobertura
+-   **GitHub Actions**: Integração automática com CI/CD pipeline
+-   **Quality Gate**: Critérios de qualidade automáticos
+
+### **Métricas Analisadas:**
+
+-   **Maintainability Rating**: A (atual)
+-   **Reliability Rating**: A (atual)
+-   **Security Rating**: A (atual)
+-   **Coverage**: 91% (integrado aos testes)
+-   **Duplicated Lines**: < 3%
+-   **Code Smells**: Identificação automática
+-   **Security Hotspots**: OWASP Top 10 compliance
+-   **Technical Debt**: Métricas de dívida técnica
+
+### **Configuração:**
+
+```bash
+# Arquivo de configuração SonarCloud
+sonar-project.properties
+
+# Documentação completa de setup
+documentation/SONARCLOUD_SETUP.md
+```
+
+### **Execução:**
+
+-   **Automática**: Em pushes e pull requests
+-   **Manual**: Via GitHub Actions
+-   **Local**: Possível configuração via SonarScanner
+
+### **Benefícios:**
+
+-   **Tech Challenge Compliance**: Atende requisito SonarQube/SonarCloud
+-   **Qualidade Contínua**: Análise automática em cada mudança
+-   **Dashboards Profissionais**: Métricas visuais detalhadas
+-   **Detecção Precoce**: Issues identificados antes do merge
+-   **Security Analysis**: Vulnerabilidades e hotspots de segurança
+
+## 🎯 BDD (Behavior Driven Development) ✅ NOVO
+
+### **Framework Implementado:**
+
+```bash
+# Executar cenários BDD
+python run_tests.py bdd
+
+# Executar com pytest diretamente
+poetry run pytest tests/bdd/ -v
+```
+
+### **Estrutura de Arquivos:**
+
+```bash
+tests/bdd/
+├── features/
+│   └── acompanhamento_pedido.feature    # Cenários Gherkin
+└── test_acompanhamento_steps.py         # Step definitions
+```
+
+### **Exemplo de Cenário Gherkin:**
+
+```gherkin
+Scenario: Cliente acompanha pedido do início ao fim
+    Given que um cliente fez um pedido com id "12345"
+    And o pedido contém "2" lanches e "1" bebida
+    And o pagamento foi aprovado
+    When o pedido é enviado para a cozinha
+    Then o status deve ser "Recebido"
+    And o tempo estimado deve ser calculado
+```
+
+### **Step Definitions:**
+
+-   **44 step definitions** implementadas com decorators pytest-bdd
+-   **@given, @when, @then**: Padrões BDD bem definidos
+-   **Integração**: Com services e models do domínio
+-   **Validação**: Comportamentos de negócio testados
+
+### **Benefícios BDD:**
+
+-   **Linguagem Natural**: Cenários legíveis por stakeholders
+-   **Documentação Viva**: Testes que documentam o comportamento
+-   **Colaboração**: Ponte entre negócio e desenvolvimento
+-   **Regressão**: Garantia de que comportamentos não sejam quebrados
+-   **Especificação**: Living specification do sistema
