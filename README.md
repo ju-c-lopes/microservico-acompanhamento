@@ -228,7 +228,7 @@ git push origin feature/sua-feature
 -   **Cobertura**: 97% atual (superou meta 90%)
 -   **Performance**: ~3.1s para suite completa
 -   **Segurança**: Escaneamento automático de vulnerabilidades
--   **Qualidade**: Validações de código obrigatórias
+-   **Qualidade**: Validações de código obrigatórias 
 
 ---
 
