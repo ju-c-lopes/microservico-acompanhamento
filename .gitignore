@@ -238,3 +238,6 @@ alembic_dev.ini
 
 # Copilot instructions
 copilot-instructions.md
+
+# SonarQube
+.sonarlint/
