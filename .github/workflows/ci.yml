@@ -242,7 +242,6 @@ jobs:
                   poetry run python -m pytest tests/ --cov=app --cov-report=xml --cov-report=term --junitxml=pytest-report.xml -v
 
             - name: SonarCloud Scan
-              uses: SonarSource/sonarcloud-github-action@master
+              uses: SonarSource/sonarqube-scan-action@v4.1.0
               env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                   SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
