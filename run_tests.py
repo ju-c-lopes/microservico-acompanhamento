@@ -33,6 +33,7 @@ Available commands:
   integration     - Run integration tests only
   performance     - Run performance tests only
   e2e             - Run end-to-end tests only
+  bdd             - Run BDD tests only
   models          - Run all model tests (unit + integration)
   fast            - Run fast tests (unit + integration)
   ci              - Run tests suitable for CI (all except performance)
@@ -81,6 +82,10 @@ Examples:
     elif command == "e2e":
         cmd = cmd_base + ["tests/e2e/"] + common_opts
         return run_command(cmd, "Running end-to-end tests")
+
+    elif command == "bdd":
+        cmd = cmd_base + ["tests/bdd/"] + common_opts
+        return run_command(cmd, "Running BDD tests")
 
     elif command == "repository":
         cmd = cmd_base + ["tests/unit/repository/"] + common_opts
