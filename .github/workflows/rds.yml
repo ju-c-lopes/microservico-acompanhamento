@@ -29,7 +29,8 @@ jobs:
             - name: Capturar IP público do runner
               id: ip
               run: |
-                  echo "TF_VAR_allowed_ips=[$(echo "${{ vars.ALLOWED_IPS }}" | sed 's/\([^,]*\)/\"\1\"/g') , \"$(curl -s https://checkip.amazonaws.com)/32\"]" >> "$GITHUB_ENV"
+                  echo "TF_VAR_allowed_ips=[$(echo "${{ vars.ALLOWED_IPS }}" | sed 's/\([^,]*\)/\"\1\"/g') , \"$(curl -s https://checkip.amazonaws.com)/32\"]" >> "$GITHUB_ENV" \
+                  && cd infra
 
             - name: Testar autenticação AWS
               run: aws sts get-caller-identity
