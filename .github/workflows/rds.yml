@@ -1,0 +1,93 @@
+name: Provision RDS and Run Alembic
+
+on:
+    workflow_dispatch:
+
+permissions:
+    id-token: write
+    contents: read
+
+jobs:
+    provision-db:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Setup Terraform
+              uses: hashicorp/setup-terraform@v3
+              with:
+                  terraform_version: 1.12.2
+
+            - name: Configure AWS Credentials
+              uses: aws-actions/configure-aws-credentials@v3
+              with:
+                  role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+                  aws-region: ${{ secrets.AWS_REGION }}
+
+            - name: Capturar IP público do runner
+              id: ip
+              run: |
+                  echo "TF_VAR_allowed_ips=[$(echo "${{ vars.ALLOWED_IPS }}" | sed 's/\([^,]*\)/\"\1\"/g') , \"$(curl -s https://checkip.amazonaws.com)/32\"]" >> "$GITHUB_ENV"
+
+            - name: Testar autenticação AWS
+              run: aws sts get-caller-identity
+              env:
+                  AWS_REGION: ${{ secrets.AWS_REGION }}
+
+            - name: Terraform Init
+              run: terraform init
+
+            - name: Validar Terraform
+              run: terraform validate
+
+            - name: Terraform Plan
+              run: terraform plan -input=false
+              env:
+                  AWS_REGION: ${{ secrets.AWS_REGION }}
+                  TF_VAR_my_ip: ${{ secrets.MY_IP }}
+                  TF_VAR_region: ${{ secrets.AWS_REGION }}
+                  TF_VAR_aws_role_to_assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+                  TF_VAR_db_name: ${{ secrets.DB_NAME }}
+                  TF_VAR_db_user: ${{ secrets.DB_USER }}
+                  TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
+
+            - name: Terraform Apply
+              run: terraform apply -auto-approve -input=false
+              env:
+                  AWS_REGION: ${{ secrets.AWS_REGION }}
+                  TF_VAR_my_ip: ${{ secrets.MY_IP }}
+                  TF_VAR_region: ${{ secrets.AWS_REGION }}
+                  TF_VAR_aws_role_to_assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+                  TF_VAR_db_name: ${{ secrets.DB_NAME }}
+                  TF_VAR_db_user: ${{ secrets.DB_USER }}
+                  TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
+
+            - name: Instalar cliente MySQL
+              run: sudo apt-get update && sudo apt-get install -y mysql-client
+
+            - name: Get RDS Endpoint
+              id: rds
+              run: |
+                  echo "RDS_HOST=$(terraform output -raw rds_endpoint | cut -d':' -f1)" >> "$GITHUB_ENV"
+
+            - name: Wait for RDS to be available
+              run: |
+                  for i in {1..50}; do
+                      nc -zv $RDS_HOST 3306 && break
+                      echo "Waiting for RDS..." && sleep 10
+                  done
+
+            - name: Run Alembic Migrations
+              env:
+                  DB_USER: ${{ secrets.DB_USER }}
+                  DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+                  DB_NAME: ${{ secrets.DB_NAME }}
+              run: |
+                  pip install poetry
+                  poetry install
+                  if ! poetry show aiomysql > /dev/null 2>&1; then
+                    poetry add aiomysql
+                  fi
+                  poetry run alembic -x db_url="mysql+aiomysql://${{ env.DB_USER }}:${{ env.DB_PASSWORD }}@$RDS_HOST:3306/${{ env.DB_NAME }}" upgrade head
