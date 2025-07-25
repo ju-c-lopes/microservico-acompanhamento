@@ -2,16 +2,39 @@ data "aws_vpc" "default" {
     default = true
 }
 
-data "aws_subnets" "default" {
-    filter {
-        name   = "vpc-id"
-        values = [data.aws_vpc.default.id]
+resource "aws_vpc" "main" {
+    cidr_block           = "10.0.0.0/16"
+    enable_dns_support   = true
+    enable_dns_hostnames = true
+
+    tags = {
+        Name = "techchallenge-vpc"
+    }
+}
+
+resource "aws_subnet" "private_a" {
+    vpc_id            = aws_vpc.main.id
+    cidr_block        = "10.0.1.0/24"
+    availability_zone = "us-east-1a"
+
+    tags = {
+        Name = "techchallenge-private-a"
+    }
+}
+
+resource "aws_subnet" "private_b" {
+    vpc_id            = aws_vpc.main.id
+    cidr_block        = "10.0.2.0/24"
+    availability_zone = "us-east-1b"
+
+    tags = {
+        Name = "techchallenge-private-b"
     }
 }
 
 resource "aws_db_subnet_group" "default" {
     name       = "rds-subnet-group"
-    subnet_ids = data.aws_subnets.default.ids
+    subnet_ids = [aws_subnet.private_a.id, aws_subnet.private_b.id]
 
     tags = {
         Name = "TechChallengeSUB"
