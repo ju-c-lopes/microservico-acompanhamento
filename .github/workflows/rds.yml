@@ -29,7 +29,7 @@ jobs:
             - name: Capturar IP público do runner
               id: ip
               run: |
-                  echo "TF_VAR_allowed_ips=[$(echo "${{ vars.ALLOWED_IPS }}" | sed 's/\([^,]*\)/\"\1\"/g') , \"$(curl -s https://checkip.amazonaws.com)/32\"]" >> "$GITHUB_ENV" && cd infra
+                  echo "TF_VAR_allowed_ips=[$(echo "${{ vars.ALLOWED_IPS }}" | sed 's/\([^,]*\)/\"\1\"/g') , \"$(curl -s https://checkip.amazonaws.com)/32\"]" >> "$GITHUB_ENV"
 
             - name: Testar autenticação AWS
               run: aws sts get-caller-identity
@@ -37,13 +37,13 @@ jobs:
                   AWS_REGION: ${{ secrets.AWS_REGION }}
 
             - name: Terraform Init
-              run: terraform init
+              run: terraform -chdir=infra init
 
             - name: Validar Terraform
-              run: terraform validate
+              run: terraform -chdir=infra validate
 
             - name: Terraform Plan
-              run: terraform plan -input=false
+              run: terraform -chdir=infra plan -input=false
               env:
                   AWS_REGION: ${{ secrets.AWS_REGION }}
                   TF_VAR_my_ip: ${{ secrets.MY_IP }}
@@ -54,7 +54,7 @@ jobs:
                   TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
 
             - name: Terraform Apply
-              run: terraform apply -auto-approve -input=false
+              run: terraform -chdir=infra apply -auto-approve -input=false
               env:
                   AWS_REGION: ${{ secrets.AWS_REGION }}
                   TF_VAR_my_ip: ${{ secrets.MY_IP }}
