@@ -1,5 +1,5 @@
-data "aws_vpc" "default" {
-    default = true
+provider "aws" {
+    region = var.region
 }
 
 resource "aws_vpc" "main" {
@@ -80,7 +80,7 @@ resource "aws_db_subnet_group" "rds" {
 resource "aws_security_group" "rds_sg" {
     name   = "rds_sg"
     description = "SG para o RDS MySQL"
-    vpc_id = data.aws_vpc.default.id
+    vpc_id = aws_vpc.main.id
 
     ingress {
         from_port   = 3306
