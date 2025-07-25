@@ -2,16 +2,13 @@ data "aws_vpc" "default" {
     default = true
 }
 
-data "aws_subnets" "default" {
-    filter {
-        name    = "vpc-id"
-        values  = [data.aws_vpc.default.id] 
-    }
+data "aws_subnet_ids" "default" {
+    vpc_id = data.aws_vpc.default.id
 }
 
 resource "aws_db_subnet_group" "default" {
     name       = "rds-subnet-group"
-    subnet_ids = data.aws_subnets.default.ids
+    subnet_ids = data.aws_subnet_ids.default.ids
 
     tags = {
         Name = "TechChallengeSUB"
