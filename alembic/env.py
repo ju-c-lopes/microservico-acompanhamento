@@ -11,7 +11,7 @@ fileConfig(config.config_file_name)
 
 # DATABASE_URL = os.getenv("DATABASE_URL")  # Já está setado no alembic.ini
 
-target_metadata = Acompanhamento.metadata
+target_metadata = Base.metadata
 
 def run_migrations_online():
     """Run migrations in 'online' mode."""
