@@ -64,7 +64,7 @@ jobs:
           if: steps.check_migrations.outputs.diff_output != ''
           run: |
               echo "🗂️ Novas migrations detectadas, aplicando upgrade..."
-              poetry run alembic upgrade head
+              poetry run alembic -x db_url="mysql+aiomysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@${{ secrets.RDS_HOST }}:3306/${{ secrets.DB_NAME }}" upgrade head
 
         - name: Deployment summary
           run: |
