@@ -226,9 +226,7 @@ yarn-error.log*
 *.sqlite
 *.sqlite3
 
-# Development Alembic migrations (NOT committed)
-alembic_dev/versions/*.py
-!alembic_dev/versions/__init__.py
+# Development Alembic migrations
 
 # Keep development Alembic structure but exclude actual migrations
 alembic_dev/__pycache__/

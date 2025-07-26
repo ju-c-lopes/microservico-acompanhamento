@@ -16,18 +16,3 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-
-  # Adicionar outros serviços conforme necessário (banco de dados, etc.)
-  # postgres:
-  #   image: postgres:15
-  #   environment:
-  #     POSTGRES_DB: acompanhamento
-  #     POSTGRES_USER: user
-  #     POSTGRES_PASSWORD: password
-  #   ports:
-  #     - "5432:5432"
-  #   volumes:
-  #     - postgres_data:/var/lib/postgresql/data
-
-# volumes:
-#   postgres_data:
