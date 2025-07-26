@@ -70,9 +70,6 @@ jobs:
     - name: Run Alembic migrations
       if: github.event_name == 'push'
       run: |
-          pip install poetry
-          poetry install
-          sleep 10
           poetry run alembic upgrade head
 
     - name: Deployment summary
