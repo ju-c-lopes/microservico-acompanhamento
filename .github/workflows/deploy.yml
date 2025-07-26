@@ -61,6 +61,10 @@ jobs:
         DB_NAME: ${{ secrets.DB_NAME }}
         RDS_HOST: ${{ secrets.RDS_HOST }}
       run: |
+        echo "::add-mask::${DB_USER}"
+        echo "::add-mask::${DB_PASSWORD}"
+        echo "::add-mask::${RDS_HOST}"
+        echo "::add-mask::${DB_NAME}"
         echo "DATABASE_URL=mysql+aiomysql://${DB_USER}:${DB_PASSWORD}@${RDS_HOST}:3306/${DB_NAME}" >> $GITHUB_ENV
 
     - name: Run Alembic migrations
