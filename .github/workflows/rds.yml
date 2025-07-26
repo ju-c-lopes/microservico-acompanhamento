@@ -70,7 +70,7 @@ jobs:
             - name: Get RDS Endpoint
               id: rds
               run: |
-                  echo "RDS_HOST=$(terraform output -raw rds_endpoint | cut -d':' -f1)" >> "$GITHUB_ENV"
+                  echo "RDS_HOST=$(terraform -chdir=infra output -raw rds_endpoint | cut -d':' -f1)" >> "$GITHUB_ENV"
 
             - name: Wait for RDS to be available
               run: |
