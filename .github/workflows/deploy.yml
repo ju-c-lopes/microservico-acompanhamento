@@ -60,10 +60,16 @@ jobs:
               DIFF_OUTPUT=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep 'alembic/versions/' || true)
               echo "diff_output=$DIFF_OUTPUT" >> $GITHUB_OUTPUT
 
+        - name: Set up database environment variables
+          run: |
+              echo "Setting up database environment variables..."
+              export DATABASE_URL=${{ secrets.DATABASE_URL }}
+
         - name: Executar Alembic se houver migrations
           if: steps.check_migrations.outputs.diff_output != ''
           run: |
               echo "🗂️ Novas migrations detectadas, aplicando upgrade..."
+              poetry install --no-interaction --no-root
               poetry run alembic -x db_url="mysql+aiomysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@${{ secrets.RDS_HOST }}:3306/${{ secrets.DB_NAME }}" upgrade head
 
         - name: Deployment summary
