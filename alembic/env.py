@@ -13,9 +13,10 @@ fileConfig(config.config_file_name)
 
 target_metadata = Base.metadata
 
+
 def run_migrations_online():
     """Run migrations in 'online' mode."""
-    db_url = config.get_main_option("sqlalchemy.url")
+    db_url = os.environ.get("DATABASE_URL", config.get_main_option("sqlalchemy.url"))
     connectable = create_engine(db_url, poolclass=pool.NullPool)
 
     with connectable.connect() as connection:
