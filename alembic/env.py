@@ -3,7 +3,7 @@ from sqlalchemy import pool, create_engine
 from alembic import context
 import os
 import sys
-from app.db.base import Acompanhamento
+from app.db.base import Base
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 config = context.config
