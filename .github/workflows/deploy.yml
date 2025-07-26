@@ -1,97 +1,98 @@
 name: Deploy
 
 permissions:
-    actions: read
-    contents: read
-    security-events: write
+  actions: read
+  contents: read
+  security-events: write
 
 on:
-    push:
-        branches: [ main ]
-    workflow_dispatch:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
-    deploy:
-        runs-on: ubuntu-latest
-        environment: production
-        
-        steps:
-        - name: Checkout code
-          uses: actions/checkout@v4
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-        - name: Set up Python
-          uses: actions/setup-python@v4
-          with:
-              python-version: "3.12"
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.12"
 
-        - name: Install Poetry
-          uses: snok/install-poetry@v1
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
 
-        - name: Install dependencies
-          run: poetry install --no-interaction --no-root
+    - name: Install dependencies
+      run: poetry install --no-interaction --no-root
 
-        - name: Run full test suite before deployment
-          run: |
-              echo "🧪 Running full test suite before deployment..."
-              poetry run python -m pytest tests/ --cov=app/models --cov-report=term -v
+    - name: Run full test suite before deployment
+      run: |
+        echo "🧪 Running full test suite before deployment..."
+        poetry run python -m pytest tests/ --cov=app/models --cov-report=term -v
 
-        - name: Set up Docker Buildx
-          uses: docker/setup-buildx-action@v3
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
 
-        - name: Build Docker image
-          uses: docker/build-push-action@v5
-          with:
-              context: .
-              push: false
-              tags: |
-                  acompanhamento:latest
-                  acompanhamento:${{ github.sha }}
-              cache-from: type=gha
-              cache-to: type=gha,mode=max
+    - name: Build Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: false
+        tags: |
+          acompanhamento:latest
+          acompanhamento:${{ github.sha }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
 
-        - name: Test Docker image
-          run: |
-              docker build -t acompanhamento:test .
-              echo "✅ Docker image built successfully"
+    - name: Test Docker image
+      run: |
+        docker build -t acompanhamento:test .
+        echo "✅ Docker image built successfully"
 
-        - name: Verificar se há novas migrations
-          id: check_migrations
-          run: |
-              DIFF_OUTPUT=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep 'alembic/versions/' || true)
-              echo "diff_output=$DIFF_OUTPUT" >> $GITHUB_OUTPUT
+    - name: Run Alembic migrations if there are new revisions
+      if: github.event_name == 'push'
+      env:
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          RDS_HOST: ${{ secrets.RDS_HOST }}
+      run: |
+          pip install poetry
+          poetry install
+          sleep 10
+          poetry run alembic -x db_url="mysql+aiomysql://${DB_USER}:${DB_PASSWORD}@${RDS_HOST}:3306/${DB_NAME}" upgrade head
 
-        - name: Executar Alembic se houver migrations
-          if: steps.check_migrations.outputs.diff_output != ''
-          run: |
-              echo "🗂️ Novas migrations detectadas, aplicando upgrade..."
-              poetry run alembic upgrade head
+    - name: Deployment summary
+      run: |
+        echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ All tests passed" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Docker image built successfully" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Ready for production deployment" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Triggered by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
 
-        - name: Deployment summary
-          run: |
-              echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
-              echo "- ✅ All tests passed" >> $GITHUB_STEP_SUMMARY
-              echo "- ✅ Docker image built successfully" >> $GITHUB_STEP_SUMMARY
-              echo "- ✅ Ready for production deployment" >> $GITHUB_STEP_SUMMARY
-              echo "" >> $GITHUB_STEP_SUMMARY
-              echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-              echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
-              echo "**Triggered by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+  security-check:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-    security-check:
-        runs-on: ubuntu-latest
-        steps:
-        - name: Checkout code
-          uses: actions/checkout@v4
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
 
-        - name: Run Trivy vulnerability scanner
-          uses: aquasecurity/trivy-action@master
-          with:
-              scan-type: 'fs'
-              scan-ref: '.'
-              format: 'sarif'
-              output: 'trivy-results.sarif'
-
-        - name: Upload Trivy scan results to GitHub Security tab
-          uses: github/codeql-action/upload-sarif@v3
-          with:
-              sarif_file: 'trivy-results.sarif'
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: 'trivy-results.sarif'
