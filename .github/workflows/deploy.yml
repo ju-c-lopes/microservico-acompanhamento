@@ -54,18 +54,26 @@ jobs:
         docker build -t acompanhamento:test .
         echo "✅ Docker image built successfully"
 
-    - name: Run Alembic migrations if there are new revisions
-      if: github.event_name == 'push'
+    - name: Set DATABASE_URL for Alembic
       env:
-          DB_USER: ${{ secrets.DB_USER }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          DB_NAME: ${{ secrets.DB_NAME }}
-          RDS_HOST: ${{ secrets.RDS_HOST }}
+        DB_USER: ${{ secrets.DB_USER }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        DB_NAME: ${{ secrets.DB_NAME }}
+        RDS_HOST: ${{ secrets.RDS_HOST }}
+      run: |
+        echo "::add-mask::${DB_USER}"
+        echo "::add-mask::${DB_PASSWORD}"
+        echo "::add-mask::${RDS_HOST}"
+        echo "::add-mask::${DB_NAME}"
+        echo "DATABASE_URL=mysql+aiomysql://${DB_USER}:${DB_PASSWORD}@${RDS_HOST}:3306/${DB_NAME}" >> $GITHUB_ENV
+
+    - name: Run Alembic migrations
+      if: github.event_name == 'push'
       run: |
           pip install poetry
           poetry install
           sleep 10
-          poetry run alembic -x db_url="mysql+aiomysql://${DB_USER}:${DB_PASSWORD}@${RDS_HOST}:3306/${DB_NAME}" upgrade head
+          poetry run alembic upgrade head
 
     - name: Deployment summary
       run: |
