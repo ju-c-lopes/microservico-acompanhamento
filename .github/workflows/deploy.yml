@@ -1,6 +1,7 @@
 name: Deploy
 
 permissions:
+  id-token: write
   actions: read
   contents: read
   security-events: write
@@ -29,6 +30,12 @@ jobs:
 
     - name: Install dependencies
       run: poetry install --no-interaction --no-root
+    
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v3
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+        aws-region: ${{ secrets.AWS_REGION }}
 
     - name: Run full test suite before deployment
       run: |
@@ -53,6 +60,17 @@ jobs:
       run: |
         docker build -t acompanhamento:test .
         echo "✅ Docker image built successfully"
+    
+    - name: Add GitHub runner IP to RDS Security Group
+      run: |
+        IP=$(curl -s https://checkip.amazonaws.com)/32
+        echo "Runner IP: $IP"
+        aws ec2 authorize-security-group-ingress \
+          --group-id ${{ secrets.SECURITY_GROUP_ID }} \
+          --protocol tcp \
+          --port 3306 \
+          --cidr $IP
+        echo "INGRESS_IP=$IP" >> $GITHUB_ENV
 
     - name: Set DATABASE_URL for Alembic
       env:
@@ -82,6 +100,17 @@ jobs:
         echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
         echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
         echo "**Triggered by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+    
+    - name: Revoke IP from Security Group
+      if: always()
+      env:
+        INGRESS_IP: ${{ env.INGRESS_IP }}
+      run: |
+        aws ec2 revoke-security-group-ingress \
+          --group-id ${{ secrets.SECURITY_GROUP_ID }} \
+          --protocol tcp \
+          --port 3306 \
+          --cidr $INGRESS_IP
 
   security-check:
     runs-on: ubuntu-latest
