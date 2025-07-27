@@ -9,8 +9,6 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 config = context.config
 fileConfig(config.config_file_name)
 
-# DATABASE_URL = os.getenv("DATABASE_URL")  # Já está setado no alembic.ini
-
 target_metadata = Base.metadata
 
 
@@ -19,7 +17,6 @@ def run_migrations_online():
     db_url = os.environ.get("DATABASE_URL", config.get_main_option("sqlalchemy.url"))
     if db_url.startswith("mysql+aiomysql"):
         db_url = db_url.replace("mysql+aiomysql", "mysql+pymysql")
-    print(f"\nUsing database URL: {db_url}\n")
     connectable = create_engine(db_url, poolclass=pool.NullPool)
 
     with connectable.connect() as connection:

@@ -30,12 +30,6 @@ jobs:
 
     - name: Install dependencies
       run: poetry install --no-interaction --no-root
-    
-    - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v3
-      with:
-        role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-        aws-region: ${{ secrets.AWS_REGION }}
 
     - name: Run full test suite before deployment
       run: |
@@ -60,35 +54,6 @@ jobs:
       run: |
         docker build -t acompanhamento:test .
         echo "✅ Docker image built successfully"
-    
-    - name: Add GitHub runner IP to RDS Security Group
-      run: |
-        IP=$(curl -s https://checkip.amazonaws.com)/32
-        echo "Runner IP: $IP"
-        aws ec2 authorize-security-group-ingress \
-          --group-id ${{ secrets.SECURITY_GROUP_ID }} \
-          --protocol tcp \
-          --port 3306 \
-          --cidr $IP
-        echo "INGRESS_IP=$IP" >> $GITHUB_ENV
-
-    - name: Set DATABASE_URL for Alembic
-      env:
-        DB_USER: ${{ secrets.DB_USER }}
-        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-        DB_NAME: ${{ secrets.DB_NAME }}
-        RDS_HOST: ${{ secrets.RDS_HOST }}
-      run: |
-        echo "::add-mask::${DB_USER}"
-        echo "::add-mask::${DB_PASSWORD}"
-        echo "::add-mask::${RDS_HOST}"
-        echo "::add-mask::${DB_NAME}"
-        echo "DATABASE_URL=mysql+aiomysql://${DB_USER}:${DB_PASSWORD}@${RDS_HOST}:3306/${DB_NAME}" >> $GITHUB_ENV
-
-    - name: Run Alembic migrations
-      if: github.event_name == 'push'
-      run: |
-          poetry run alembic upgrade head
 
     - name: Deployment summary
       run: |
