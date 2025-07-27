@@ -65,17 +65,6 @@ jobs:
         echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
         echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
         echo "**Triggered by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
-    
-    - name: Revoke IP from Security Group
-      if: always()
-      env:
-        INGRESS_IP: ${{ env.INGRESS_IP }}
-      run: |
-        aws ec2 revoke-security-group-ingress \
-          --group-id ${{ secrets.SECURITY_GROUP_ID }} \
-          --protocol tcp \
-          --port 3306 \
-          --cidr $INGRESS_IP
 
   security-check:
     runs-on: ubuntu-latest
