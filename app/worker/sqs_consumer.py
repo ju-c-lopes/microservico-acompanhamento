@@ -31,18 +31,18 @@ async def consumir_fila(queue_url: str, tipo: str):
         messages = await sqs.receive_messages(queue_url)
         for msg in messages:
             try:
-                event_type, evento = adaptar_evento_generico(msg["Body"])
+                event_type, data = adaptar_evento_generico(msg["Body"])
 
                 if event_type == "pagamento_atualizado":
-                    await service.processar_evento_pagamento(evento)
+                    await service.processar_evento_pagamento(data)
 
                 elif event_type == "pedido_criado":
-                    await service.processar_evento_pedido(evento)
+                    await service.processar_evento_pedido(data)
 
                 elif event_type == "pedido_status_atualizado":
                     await service.atualizar_status_pedido(
-                        id_pedido=evento["id_pedido"],
-                        novo_status=evento["status"],
+                        id_pedido=data["id_pedido"],
+                        novo_status=data["status"],
                     )
                 else:
                     print(f"⚠️ Evento ignorado: {event_type}")
