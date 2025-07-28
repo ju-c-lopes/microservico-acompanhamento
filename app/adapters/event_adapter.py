@@ -11,7 +11,7 @@ def adaptar_evento_generico(body: str) -> Tuple[str, Union[EventoPagamento, Even
     tipo_evento = payload.get("event_type")
     data = payload.get("data")
 
-    if tipo_evento == "pagamento_confirmado":
+    if tipo_evento == "pagamento_atualizado":
         return tipo_evento, EventoPagamento(
             id_pagamento=data["id_pagamento"],
             id_pedido=int(data["id_pedido"]),

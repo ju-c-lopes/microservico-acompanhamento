@@ -8,7 +8,7 @@ from app.domain.order_state import StatusPagamento, StatusPedido
 def test_adaptar_evento_generico_pagamento():
     msg = '''
     {
-        "event_type": "pagamento_confirmado",
+        "event_type": "pagamento_atualizado",
         "data": {
             "id_pagamento": 1,
             "id_pedido": 10,
@@ -19,7 +19,7 @@ def test_adaptar_evento_generico_pagamento():
     '''
     tipo_evento, evento = adaptar_evento_generico(msg)
 
-    assert tipo_evento == "pagamento_confirmado"
+    assert tipo_evento == "pagamento_atualizado"
     assert isinstance(evento, EventoPagamento)
     assert evento.id_pagamento == 1
     assert evento.id_pedido == 10

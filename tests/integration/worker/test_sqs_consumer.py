@@ -11,7 +11,7 @@ async def test_consumir_fila_processa_pagamento_e_deleta():
     mock_sqs.receive_messages.side_effect = [
         [{
             "Body": '''{
-                "event_type": "pagamento_confirmado",
+                "event_type": "pagamento_atualizado",
                 "data": {
                     "id_pagamento": 1,
                     "id_pedido": 10,
