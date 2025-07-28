@@ -26,13 +26,32 @@ FILAS = [
 async def consumir_fila(queue_url: str, tipo: str):
     sqs = get_sqs_client()
     service = AcompanhamentoService()
+
     while True:
         messages = await sqs.receive_messages(queue_url)
         for msg in messages:
-            evento = adaptar_evento_generico(msg["Body"])
-            # Aqui você pode rotear pelo event_type se quiser
-            await service.processar_evento(evento)
-            await sqs.delete_message(queue_url, msg["ReceiptHandle"])
+            try:
+                event_type, evento = adaptar_evento_generico(msg["Body"])
+
+                if event_type == "pagamento_confirmado":
+                    await service.processar_evento_pagamento(evento)
+
+                elif event_type == "pedido_criado":
+                    await service.processar_evento_pedido(evento)
+
+                elif event_type == "pedido_status_atualizado":
+                    await service.atualizar_status_pedido(
+                        id_pedido=evento["id_pedido"],
+                        novo_status=evento["status"],
+                    )
+                else:
+                    print(f"⚠️ Evento ignorado: {event_type}")
+
+                await sqs.delete_message(queue_url, msg["ReceiptHandle"])
+
+            except Exception as e:
+                print(f"❌ Erro ao processar mensagem da fila {tipo}: {e}")
+
         await asyncio.sleep(1)
 
 

@@ -1,43 +1,47 @@
-"""
-Adaptadores para eventos recebidos do SQS no padrão {"event_type": ..., "data": ...}.
-Transformam o JSON da mensagem no formato esperado pelo domínio (modelos Pydantic).
-"""
+# app/adapters/event_adapter.py
 
+from typing import Any, Dict, Tuple, Union
 import json
-from typing import Any, Dict
+from app.domain.models import EventoPagamento, EventoPedido
+from app.domain.enums import StatusPagamento, StatusPedido
+from datetime import datetime
 
-# Exemplo: importação dos modelos do domínio
-# from app.models.evento_pagamento import EventoPagamentoModel
-# from app.models.evento_pedido import EventoPedidoModel
+def adaptar_evento_generico(body: str) -> Tuple[str, Union[EventoPagamento, EventoPedido, Dict[str, Any]]]:
+    payload = json.loads(body)
+    tipo_evento = payload.get("event_type")
+    data = payload.get("data")
 
+    if tipo_evento == "pagamento_confirmado":
+        return tipo_evento, EventoPagamento(
+            id_pagamento=data["id_pagamento"],
+            id_pedido=int(data["id_pedido"]),
+            status=StatusPagamento(data["status"]),
+            criado_em=datetime.fromisoformat(data["data_criacao"]),
+        )
 
-def adaptar_evento_generico(msg_body: str) -> Dict[str, Any]:
-    """
-    Adapta qualquer evento no padrão {"event_type": ..., "data": ...} para um dicionário.
-    Você pode usar o event_type para decidir qual modelo Pydantic instanciar.
-    """
-    evento = json.loads(msg_body)
-    event_type = evento.get("event_type")
-    data = evento.get("data", {})
-    # Aqui você pode fazer lógica condicional para cada tipo de evento
-    # Exemplo:
-    # if event_type == "pagamento_confirmado":
-    #     return EventoPagamentoModel(**data)
-    # elif event_type == "pedido_criado":
-    #     return EventoPedidoModel(**data)
-    # else:
-    #     raise ValueError(f"Tipo de evento não suportado: {event_type}")
-    return {"event_type": event_type, "data": data}
+    elif tipo_evento == "pedido_criado":
+        return tipo_evento, EventoPedido(
+            id_pedido=data["id_pedido"],
+            cpf_cliente=data["cliente"],
+            itens=[  # Isso depende do formato da lista
+                ItemPedidoEvent(
+                    id_produto=item["id"],
+                    quantidade=item.get("quantidade", 1),  # default 1
+                )
+                for item in data["produtos"]
+            ],
+            total_pedido=sum(item["preco"] for item in data["produtos"]),
+            tempo_estimado=None,
+            status=StatusPedido(data["status"]),
+            criado_em=datetime.fromisoformat(data["criado_em"]),
+        )
 
+    elif tipo_evento == "pedido_status_atualizado":
+        return tipo_evento, {
+            "id_pedido": int(data["id_pedido"]),
+            "status": StatusPedido(data["status"]),
+            "atualizado_em": datetime.fromisoformat(data["atualizado_em"]),
+        }
 
-# Você pode criar funções específicas para cada tipo de evento, se preferir
-
-
-def adaptar_evento_pagamento(msg_body: str) -> Dict[str, Any]:
-    evento = json.loads(msg_body)
-    return evento.get("data", {})
-
-
-def adaptar_evento_pedido(msg_body: str) -> Dict[str, Any]:
-    evento = json.loads(msg_body)
-    return evento.get("data", {})
+    else:
+        raise ValueError(f"Tipo de evento desconhecido: {tipo_evento}")
