@@ -3,7 +3,7 @@
 from typing import Any, Dict, Tuple, Union
 import json
 from app.models import EventoPagamento, EventoPedido
-from app.domain.enums import StatusPagamento, StatusPedido
+from app.domain.order_state import StatusPagamento, StatusPedido
 from datetime import datetime
 
 def adaptar_evento_generico(body: str) -> Tuple[str, Union[EventoPagamento, EventoPedido, Dict[str, Any]]]:
