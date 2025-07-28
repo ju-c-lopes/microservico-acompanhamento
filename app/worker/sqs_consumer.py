@@ -33,7 +33,7 @@ async def consumir_fila(queue_url: str, tipo: str):
             try:
                 event_type, evento = adaptar_evento_generico(msg["Body"])
 
-                if event_type == "pagamento_confirmado":
+                if event_type == "pagamento_atualizado":
                     await service.processar_evento_pagamento(evento)
 
                 elif event_type == "pedido_criado":
