@@ -2,7 +2,7 @@
 
 from typing import Any, Dict, Tuple, Union
 import json
-from app.models.acompanhamento import EventoPagamento, EventoPedido
+from app.models.acompanhamento import EventoPagamento, EventoPedido, ItemPedido
 from app.domain.order_state import StatusPagamento, StatusPedido
 from datetime import datetime
 
@@ -24,7 +24,7 @@ def adaptar_evento_generico(body: str) -> Tuple[str, Union[EventoPagamento, Even
             id_pedido=data["id_pedido"],
             cpf_cliente=data["cliente"],
             itens=[  # Isso depende do formato da lista
-                ItemPedidoEvent(
+                ItemPedido(
                     id_produto=item["id"],
                     quantidade=item.get("quantidade", 1),  # default 1
                 )
