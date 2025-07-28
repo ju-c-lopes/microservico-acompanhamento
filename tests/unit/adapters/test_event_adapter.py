@@ -1,12 +1,22 @@
 import pytest
 from datetime import datetime
 from app.adapters.event_adapter import adaptar_evento_generico
-from app.models.acompanhamento import EventoPagamento, EventoPedido, ItemPedidoEvent
+from app.models.acompanhamento import EventoPagamento, EventoPedido, ItemPedido
 from app.domain.order_state import StatusPagamento, StatusPedido
 
 
 def test_adaptar_evento_generico_pagamento():
-    msg = '{"event_type": "pagamento_confirmado", "data": {"id_pagamento": 1, "id_pedido": 10, "status": "confirmado", "data_criacao": "2025-07-28T12:00:00"}}'
+    msg = '''
+    {
+        "event_type": "pagamento_confirmado",
+        "data": {
+            "id_pagamento": 1,
+            "id_pedido": 10,
+            "status": "confirmado",
+            "data_criacao": "2025-07-28T12:00:00"
+        }
+    }
+    '''
     tipo_evento, evento = adaptar_evento_generico(msg)
 
     assert tipo_evento == "pagamento_confirmado"
@@ -39,16 +49,26 @@ def test_adaptar_evento_generico_pedido():
     assert isinstance(evento, EventoPedido)
     assert evento.id_pedido == 123
     assert evento.cpf_cliente == "12345678900"
-    assert len(evento.itens) == 2
-    assert evento.itens[0] == ItemPedidoEvent(id_produto=1, quantidade=2)
-    assert evento.itens[1] == ItemPedidoEvent(id_produto=2, quantidade=1)
+    assert evento.itens == [
+        ItemPedido(id_produto=1, quantidade=2),
+        ItemPedido(id_produto=2, quantidade=1),
+    ]
     assert evento.total_pedido == 15.0
-    assert evento.status == StatusPedido.RECEBIDO
+    assert evento.status == "recebido"
     assert evento.criado_em == datetime(2025, 7, 28, 10, 30, 0)
 
 
 def test_adaptar_evento_generico_pedido_status_atualizado():
-    msg = '{"event_type": "pedido_status_atualizado", "data": {"id_pedido": 456, "status": "pronto", "atualizado_em": "2025-07-28T18:45:00"}}'
+    msg = '''
+    {
+        "event_type": "pedido_status_atualizado",
+        "data": {
+            "id_pedido": 456,
+            "status": "pronto",
+            "atualizado_em": "2025-07-28T18:45:00"
+        }
+    }
+    '''
     tipo_evento, evento = adaptar_evento_generico(msg)
 
     assert tipo_evento == "pedido_status_atualizado"
