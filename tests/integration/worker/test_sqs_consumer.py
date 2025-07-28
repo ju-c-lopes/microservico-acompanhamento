@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 from app.worker import sqs_consumer
+from app.domain.order_state import StatusPedido
 
 
 @pytest.mark.asyncio
@@ -115,6 +116,6 @@ async def test_consumir_fila_atualiza_status_pedido():
 
             mock_service.atualizar_status_pedido.assert_called_once_with(
                 id_pedido=456,
-                novo_status=sqs_consumer.StatusPedido.PRONTO
+                novo_status=StatusPedido.PRONTO
             )
             mock_sqs.delete_message.assert_called_once()
