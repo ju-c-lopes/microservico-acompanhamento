@@ -2,7 +2,7 @@
 
 from typing import Any, Dict, Tuple, Union
 import json
-from app.domain.models import EventoPagamento, EventoPedido
+from app.models import EventoPagamento, EventoPedido
 from app.domain.enums import StatusPagamento, StatusPedido
 from datetime import datetime
 
