@@ -1,3 +1,31 @@
+# Internet Gateway para a VPC padrão
+resource "aws_internet_gateway" "default" {
+  vpc_id = data.aws_vpc.default.id
+
+  tags = {
+    Name = "acompanhamento-default-igw"
+  }
+}
+
+# Route Table pública
+resource "aws_route_table" "public" {
+  vpc_id = data.aws_vpc.default.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.default.id
+  }
+
+  tags = {
+    Name = "acompanhamento-public-rt"
+  }
+}
+
+# Associação da subnet pública à route table pública
+resource "aws_route_table_association" "public_assoc" {
+  subnet_id      = aws_subnet.default_public.id
+  route_table_id = aws_route_table.public.id
+}
 terraform {
   backend "s3" {
     bucket = "techchallenge-juclops"
