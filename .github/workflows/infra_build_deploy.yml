@@ -155,9 +155,17 @@ jobs:
                   key: ${{ secrets.EC2_SSH_KEY }}
                   script: |
                       # Aguardar Docker estar disponível (instalado via user_data)
-                      while ! command -v docker &> /dev/null; do
-                          echo "Aguardando Docker estar disponível..."
+                      for i in {1..24}; do
+                          if command -v docker &> /dev/null; then
+                              echo "Docker disponível!"
+                              break
+                          fi
+                          echo "Aguardando Docker estar disponível... ($i/24)"
                           sleep 5
+                          if [ $i -eq 24 ]; then
+                              echo "Timeout: Docker não ficou disponível após 2 minutos."
+                              exit 1
+                          fi
                       done
 
                       # Parar container anterior se existir
