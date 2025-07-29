@@ -88,6 +88,39 @@ jobs:
         needs: [infra, build-and-push]
         runs-on: ubuntu-latest
         steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Setup Terraform
+              uses: hashicorp/setup-terraform@v3
+
+            - name: Get Runner Public IP
+              id: runner_ip
+              run: |
+                  RUNNER_IP=$(curl -s https://ifconfig.me)
+                  echo "runner_ip=$RUNNER_IP" >> $GITHUB_OUTPUT
+                  echo "Runner IP: $RUNNER_IP"
+
+            - name: Add Runner IP to Security Group
+              env:
+                  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
+              run: |
+                  # Obter o security group ID da instância EC2
+                  cd infra-ec2
+                  terraform init
+                  SG_ID=$(terraform output -raw security_group_id)
+
+                  # Adicionar regra temporária para SSH do runner
+                  aws ec2 authorize-security-group-ingress \
+                    --group-id $SG_ID \
+                    --protocol tcp \
+                    --port 22 \
+                    --cidr ${{ steps.runner_ip.outputs.runner_ip }}/32 \
+                    --tag-specifications 'ResourceType=security-group-rule,Tags=[{Key=Name,Value=github-runner-temp},{Key=Temporary,Value=true}]' \
+                    || echo "Regra já existe ou erro ao adicionar"
+
             - name: Wait for EC2 to be ready
               run: sleep 30 # Aguarda EC2 completar user_data setup
 
@@ -118,3 +151,25 @@ jobs:
                         -e DATABASE_URL="sqlite:///./acompanhamento.db" \
                         -e ENVIRONMENT="production" \
                         ${{ secrets.DOCKERHUB_USERNAME }}/acompanhamento:latest
+
+            - name: Remove Runner IP from Security Group
+              if: always() # Executa mesmo se o deploy falhar
+              env:
+                  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
+              run: |
+                  # Obter o security group ID
+                  cd infra-ec2
+                  terraform init
+                  SG_ID=$(terraform output -raw security_group_id)
+
+                  # Remover a regra temporária do runner
+                  aws ec2 revoke-security-group-ingress \
+                    --group-id $SG_ID \
+                    --protocol tcp \
+                    --port 22 \
+                    --cidr ${{ steps.runner_ip.outputs.runner_ip }}/32 \
+                    || echo "Regra não encontrada ou já removida"
+
+                  echo "IP do runner removido do security group com sucesso"
