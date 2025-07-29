@@ -20,16 +20,23 @@ resource "aws_key_pair" "default" {
   public_key = file(var.public_key_path)
 }
 
-# VPC e Subnets padrão
-
+data "aws_vpc" "default" {
+  default = true
+}
+# VPC padrão
 data "aws_vpc" "default" {
   default = true
 }
 
-data "aws_subnets" "default" {
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.default.id]
+# Subnet pública na VPC padrão
+resource "aws_subnet" "default_public" {
+  vpc_id                  = data.aws_vpc.default.id
+  cidr_block              = cidrsubnet(data.aws_vpc.default.cidr_block, 8, 0)
+  map_public_ip_on_launch = true
+  availability_zone       = null # AWS escolhe automaticamente
+
+  tags = {
+    Name = "acompanhamento-default-public"
   }
 }
 
@@ -64,7 +71,7 @@ resource "aws_security_group" "ec2_sg" {
 resource "aws_instance" "acompanhamento" {
   ami                    = data.aws_ami.ubuntu.id
   instance_type          = var.instance_type
-  subnet_id              = data.aws_subnets.default.ids[0]
+  subnet_id              = aws_subnet.default_public.id
   key_name               = aws_key_pair.default.key_name
   vpc_security_group_ids = [aws_security_group.ec2_sg.id]
 
