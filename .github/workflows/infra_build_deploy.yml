@@ -179,7 +179,7 @@ jobs:
                       docker run -d \
                         --name acompanhamento \
                         -p 8000:8000 \
-                        -e DATABASE_URL="sqlite:///./acompanhamento.db" \
+                        -e DATABASE_URL="mysql+aiomysql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@${{ secrets.RDS_HOST }}:3306/${{ secrets.DB_NAME }}" \
                         -e ENVIRONMENT="production" \
                         ${{ secrets.DOCKERHUB_USERNAME }}/acompanhamento:latest
 
