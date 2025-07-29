@@ -15,7 +15,7 @@ sudo usermod -aG docker ubuntu
 echo "${DOCKERHUB_TOKEN}" | sudo docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
 
 # Puxa e roda o container (ajuste as variáveis conforme necessário)
-sudo docker pull seu-usuario/acompanhamento:latest
+sudo docker pull ${DOCKERHUB_USERNAME}/acompanhamento:latest
 sudo docker stop acompanhamento || true
 sudo docker rm acompanhamento || true
 sudo docker run -d --name acompanhamento \
