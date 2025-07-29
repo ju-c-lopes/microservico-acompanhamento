@@ -27,8 +27,6 @@ if async_url.startswith("mysql://"):
     async_url = async_url.replace("mysql://", "mysql+aiomysql://")
 elif async_url.startswith("sqlite://"):
     async_url = async_url.replace("sqlite://", "sqlite+aiosqlite://")
-elif async_url.startswith("postgresql://"):
-    async_url = async_url.replace("postgresql://", "postgresql+asyncpg://")
 
 async_engine = create_async_engine(
     async_url,
