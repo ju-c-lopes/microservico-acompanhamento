@@ -239,3 +239,18 @@ copilot-instructions.md
 
 # SonarQube
 .sonarlint/
+
+# SEGURANÇA: SSH Keys e credenciais (IMPORTANTE: NÃO COMMITAR)
+acompanhamento-ec2-key*
+*.pem
+*.ppk
+
+# Terraform
+terraform.tfvars
+terraform.tfstate*
+.terraform/
+.terraform.lock.hcl
+test-terraform.sh
+
+# AWS
+.aws/

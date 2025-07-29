@@ -2,11 +2,9 @@ import os
 from typing import AsyncGenerator
 
 from sqlalchemy import create_engine
-from sqlalchemy.ext.asyncio import (AsyncSession, async_sessionmaker,
-                                    create_async_engine)
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
-# TODO: Define SECRETS in Github Actions
 SQLALCHEMY_DATABASE_URL = os.environ.get("DATABASE_URL", None)
 if not SQLALCHEMY_DATABASE_URL:
     raise ValueError(
@@ -23,8 +21,15 @@ engine = create_engine(
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Async engine e session para novos endpoints
-# Converte mysql:// para mysql+aiomysql://
-async_url = SQLALCHEMY_DATABASE_URL.replace("mysql://", "mysql+aiomysql://")
+# Converte URLs para drivers async
+async_url = SQLALCHEMY_DATABASE_URL
+if async_url.startswith("mysql://"):
+    async_url = async_url.replace("mysql://", "mysql+aiomysql://")
+elif async_url.startswith("sqlite://"):
+    async_url = async_url.replace("sqlite://", "sqlite+aiosqlite://")
+elif async_url.startswith("postgresql://"):
+    async_url = async_url.replace("postgresql://", "postgresql+asyncpg://")
+
 async_engine = create_async_engine(
     async_url,
     pool_pre_ping=True,

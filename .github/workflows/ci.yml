@@ -1,10 +1,10 @@
-name: CI/CD Pipeline
+name: CI - Continuous Integration
 
 on:
     push:
-        branches: [main, develop]
+        branches: [develop]
     pull_request:
-        branches: [main, develop]
+        branches: [main]
         types: [opened, synchronize, reopened]
 
 jobs:

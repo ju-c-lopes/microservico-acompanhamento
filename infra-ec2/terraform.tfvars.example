@@ -1,0 +1,16 @@
+# Configurações da EC2
+region           = "us-east-1"
+key_name         = "acompanhamento-demo-key"
+public_key_path  = "../acompanhamento-ec2-key.pub"
+my_ip           = "187.180.172.78/32"
+instance_type   = "t2.micro"
+
+# Docker Hub (substitua pelos seus valores)
+dockerhub_username = "SEU_USUARIO_DOCKERHUB"
+dockerhub_token    = "SEU_TOKEN_DOCKERHUB"
+
+# Database (valores de exemplo - ajuste conforme necessário)
+db_user     = "admin"
+db_password = "senha_temporaria_123"
+rds_host    = "localhost"  # Será substituído pelo RDS real se existir
+db_name     = "acompanhamento"
