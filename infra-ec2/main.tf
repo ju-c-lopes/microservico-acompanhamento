@@ -69,7 +69,7 @@ resource "aws_instance" "acompanhamento" {
   key_name               = aws_key_pair.default.key_name
   vpc_security_group_ids = [aws_security_group.ec2_sg.id]
 
-  user_data = templatefile("${path.module}/setup.sh", {
+  user_data = templatefile("${path.module}/setup.sh.tpl", {
     DOCKERHUB_USERNAME = var.dockerhub_username,
     DOCKERHUB_TOKEN    = var.dockerhub_token,
     DB_USER           = var.db_user,
