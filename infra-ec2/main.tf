@@ -23,10 +23,6 @@ resource "aws_key_pair" "default" {
 data "aws_vpc" "default" {
   default = true
 }
-# VPC padrão
-data "aws_vpc" "default" {
-  default = true
-}
 
 # Subnet pública na VPC padrão
 resource "aws_subnet" "default_public" {
