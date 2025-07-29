@@ -1,3 +1,11 @@
+terraform {
+  backend "s3" {
+    bucket = "techchallenge-juclops"
+    key    = "acompanhamento/terraform.tfstate"
+    region = "us-east-1"
+  }
+}
+
 # Provedor AWS
 provider "aws" {
   region  = var.region
