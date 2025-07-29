@@ -1,5 +1,6 @@
 variable "region" {
   description = "Região AWS para provisionar a EC2"
+  default     = "us-east-1"
   type        = string
 }
 
