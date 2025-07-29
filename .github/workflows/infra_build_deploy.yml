@@ -102,7 +102,12 @@ jobs:
             - name: Get Runner Public IP
               id: runner_ip
               run: |
-                  RUNNER_IP=$(curl -s https://ifconfig.me)
+                  # Tenta obter o IP público do runner de dois serviços diferentes
+                  RUNNER_IP=$(curl -s https://ifconfig.me || curl -s https://api.ipify.org)
+                  if [ -z "$RUNNER_IP" ]; then
+                    echo "Falha ao obter IP do runner."
+                    exit 1
+                  fi
                   echo "runner_ip=$RUNNER_IP" >> $GITHUB_OUTPUT
                   echo "Runner IP: $RUNNER_IP"
 
@@ -128,6 +133,19 @@ jobs:
 
             - name: Wait for EC2 to be ready
               run: sleep 30 # Aguarda EC2 completar user_data setup
+
+            - name: Wait for SSH to be available
+              env:
+                  EC2_IP: ${{ needs.infra.outputs.ec2_ip }}
+              run: |
+                  echo "Aguardando SSH responder na EC2 ($EC2_IP:22)..."
+                  for i in {1..24}; do
+                    nc -z -w3 "$EC2_IP" 22 && echo "SSH disponível!" && exit 0
+                    echo "Tentativa $i: SSH ainda não disponível, aguardando 5s..."
+                    sleep 5
+                  done
+                  echo "Timeout: SSH não respondeu após 2 minutos."
+                  exit 1
 
             - name: Deploy on EC2 via SSH
               uses: appleboy/ssh-action@v1
