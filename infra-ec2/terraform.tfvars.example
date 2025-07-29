@@ -2,7 +2,7 @@
 region           = "us-east-1"
 key_name         = "acompanhamento-demo-key"
 public_key_path  = "../acompanhamento-ec2-key.pub"
-my_ip           = "187.180.172.78/32"
+my_ip           = "YOUR_IP_HERE/32"
 instance_type   = "t2.micro"
 
 # Docker Hub (substitua pelos seus valores)
