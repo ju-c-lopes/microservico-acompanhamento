@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
 
-# Atualiza pacotes e instala Docker
-sudo apt-get update
-sudo apt-get install -y docker.io
+# Instala Docker via script oficial
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
 
 # (Opcional) Instala Docker Compose
 # sudo apt-get install -y docker-compose
