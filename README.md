@@ -233,3 +233,4 @@ git push origin feature/sua-feature
 ---
 
 **Tech Challenge FIAP - Fase 4** | Desenvolvido com ❤️ e FastAPI 
+
