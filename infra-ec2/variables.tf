@@ -11,7 +11,6 @@ variable "key_name" {
 variable "public_key_path" {
   description = "Caminho para o arquivo da chave pública SSH"
   type        = string
-  sensitive = true
 }
 
 variable "my_ip" {
