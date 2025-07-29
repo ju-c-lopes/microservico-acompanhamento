@@ -1,7 +1,6 @@
 # Provedor AWS
 provider "aws" {
   region  = var.region
-  profile = "default"
 }
 
 # AMI Ubuntu mais recente
